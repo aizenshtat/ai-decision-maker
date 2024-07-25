@@ -13,6 +13,13 @@ interface SelectFieldProps {
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({ field, value, onChange }) => {
+  console.log('SelectField props:', field);
+
+  if (!field.options || field.options.length === 0) {
+    console.error('No options available for SelectField:', field.name);
+    return <p>No options available. Please complete previous steps.</p>;
+  }
+
   return (
     <div className="mb-4">
       <label htmlFor={field.name} className="block text-sm font-medium text-gray-700 mb-1">

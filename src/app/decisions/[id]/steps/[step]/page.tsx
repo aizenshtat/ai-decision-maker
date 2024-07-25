@@ -176,8 +176,17 @@ export default function DecisionStep() {
       return [];
     }
 
+    console.log('Field data:', fieldData);
+
     if (Array.isArray(fieldData)) {
-      return fieldData.map(item => item[use] || item);
+      const options = fieldData.map(item => {
+        if (typeof item === 'object' && item !== null) {
+          return item[use] || JSON.stringify(item);
+        }
+        return String(item);
+      });
+      console.log('Extracted options:', options);
+      return options;
     } else {
       console.error(`Field data is not an array for ${fieldName} in ${stepTitle}`);
       return [];
@@ -222,12 +231,13 @@ export default function DecisionStep() {
           />
         );
       case 'select':
-        const options = field.options ? getOptionsFromPreviousStep(field.options) : []
+        const options = field.dependencies ? getOptionsFromPreviousStep(`${field.dependencies.step}.${field.dependencies.field}.${field.dependencies.use}`) : []
+        console.log('Select field options:', options);
         return (
           <SelectField
             key={field.name}
             field={{...field, options}}
-            value={inputs[field.name]}
+            value={inputs[field.name] || ''}
             onChange={(value) => handleInputChange(field.name, value)}
           />
         );
