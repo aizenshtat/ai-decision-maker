@@ -4,41 +4,55 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../../auth/[...nextauth]/route'
-import { PERSONAL_DECISION_FRAMEWORK } from '@/lib/decisionFramework'
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions)
+  console.log('Session:', JSON.stringify(session, null, 2))
 
   if (!session || !session.user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
-  const body = await request.json()
-  const { question } = body
-
-  if (!question) {
-    return NextResponse.json({ error: 'Question is required' }, { status: 400 })
+    console.log('Not authenticated or user not found in database')
+    return NextResponse.json({ error: 'Not authenticated', redirect: '/auth/signin' }, { status: 401 })
   }
 
   try {
-    const newDecision = await prisma.decision.create({
-      data: {
-        userId: session.user.id,
-        question: question,
-        framework: 'personal',
-        data: {},
-        currentStep: 0,
-        status: 'in_progress'
-      }
+    const { question, frameworkId } = await request.json()
+    console.log('Received question:', question)
+    console.log('Received frameworkId:', frameworkId)
+
+    // Fetch the user from the database
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id }
     })
 
-    return NextResponse.json({
-      decision_id: newDecision.id,
-      steps: PERSONAL_DECISION_FRAMEWORK.steps,
-      total_steps: PERSONAL_DECISION_FRAMEWORK.steps.length
+    if (!user) {
+      console.log('User not found:', session.user.id)
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+    console.log('User found:', user.id)
+
+    const framework = await prisma.customFramework.findUnique({
+      where: { id: frameworkId },
     })
+
+    if (!framework) {
+      console.log('Framework not found')
+      return NextResponse.json({ error: 'Framework not found' }, { status: 404 })
+    }
+    console.log('Framework found:', framework.id)
+
+    const decision = await prisma.decision.create({
+      data: {
+        question,
+        userId: user.id,
+        frameworkId: framework.id,
+        steps: framework.steps,
+      },
+    })
+    console.log('Decision created:', decision)
+
+    return NextResponse.json(decision)
   } catch (error) {
     console.error('Error starting decision:', error)
-    return NextResponse.json({ error: 'Error starting decision' }, { status: 500 })
+    return NextResponse.json({ error: 'An error occurred while starting the decision' }, { status: 500 })
   }
 }

@@ -9,32 +9,37 @@ import { PERSONAL_DECISION_FRAMEWORK } from '@/lib/decisionFramework'
 import MatrixField from '@/components/MatrixField'
 import ListOfObjectsField from '@/components/ListOfObjectsField'
 import ListField from '@/components/ListField'
+import { getFrameworkName } from '@/lib/utils'
 
 export default function ViewDecision() {
   const [decision, setDecision] = useState(null)
+  const [steps, setSteps] = useState([])
+  const [frameworkName, setFrameworkName] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const params = useParams()
   const { id } = params
 
   useEffect(() => {
-    const fetchDecision = async () => {
-      try {
-        const response = await fetch(`/api/decisions/${id}`)
-        if (!response.ok) throw new Error('Failed to fetch decision')
-        const data = await response.json()
-        console.log('Fetched decision data:', data)
-        setDecision(data)
-      } catch (error) {
-        console.error('Error fetching decision:', error)
-        setError('Failed to load decision. Please try again.')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchDecision()
+    fetchDecisionData()
   }, [id])
+
+  const fetchDecisionData = async () => {
+    try {
+      const response = await fetch(`/api/decisions/${id}`)
+      if (!response.ok) throw new Error('Failed to fetch decision data')
+      const data = await response.json()
+      setDecision(data.decision)
+      setSteps(data.steps)
+      const name = await getFrameworkName(data.decision.frameworkId)
+      setFrameworkName(name)
+    } catch (error) {
+      console.error('Error fetching decision data:', error)
+      setError('Failed to load decision data. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   if (isLoading) return <div className="text-center mt-10">Loading decision...</div>
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>
@@ -119,6 +124,7 @@ export default function ViewDecision() {
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
       <h1 className="text-3xl font-bold mb-6">{decision.question}</h1>
+      <p className="text-gray-600 mb-4">Framework: {frameworkName}</p>
       {PERSONAL_DECISION_FRAMEWORK.steps.map((step, index) => {
         const stepData = decision.data[step.title];
         if (!stepData) return null;

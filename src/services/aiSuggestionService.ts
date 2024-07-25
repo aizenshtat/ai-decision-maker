@@ -1,7 +1,7 @@
 // src/services/aiSuggestionService.ts
 
-import { PERSONAL_DECISION_FRAMEWORK } from '@/lib/decisionFramework';
 import { Anthropic } from '@anthropic-ai/sdk';
+import prisma from '@/lib/prisma'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -79,25 +79,45 @@ function generateFieldDescription(field: any): string {
   return description;
 }
 
-export async function getAiSuggestion(stepIndex: number, currentContext: any): Promise<any> {
-  const step = PERSONAL_DECISION_FRAMEWORK.steps[stepIndex];
-  const fieldsText = step.fields.map(generateFieldDescription).join("\n");
-  const fieldFormat = generateFieldFormat(step.fields);
-
-  const formattedContext = Object.entries(currentContext)
-    .map(([key, value]) => `${key}:\n${JSON.stringify(value, null, 2)}`)
-    .join("\n");
-
-  const prompt = PROMPT_TEMPLATE
-    .replace('{step_title}', step.title)
-    .replace('{step_description}', step.description)
-    .replace('{current_context}', formattedContext)
-    .replace('{fields}', fieldsText)
-    .replace('{field_format}', fieldFormat);
-
-  console.log('Generated AI prompt:', prompt);
-
+export async function getAiSuggestion(frameworkId: string, stepIndex: number, context: any) {
   try {
+    console.log(`Getting AI suggestion for framework ${frameworkId}, step ${stepIndex}`);
+    const framework = await prisma.customFramework.findUnique({
+      where: { id: frameworkId }
+    });
+
+    console.log('Framework fetched:', JSON.stringify(framework, null, 2));
+
+    if (!framework) {
+      throw new Error('Framework not found');
+    }
+
+    const steps = typeof framework.steps === 'string' ? JSON.parse(framework.steps) : framework.steps;
+    console.log('Parsed steps:', JSON.stringify(steps, null, 2));
+
+    const step = steps.steps[stepIndex];
+    console.log('Current step:', JSON.stringify(step, null, 2));
+
+    if (!step) {
+      throw new Error('Step not found');
+    }
+
+    const fieldsText = step.fields.map(generateFieldDescription).join("\n");
+    const fieldFormat = generateFieldFormat(step.fields);
+
+    const formattedContext = Object.entries(context)
+      .map(([key, value]) => `${key}:\n${JSON.stringify(value, null, 2)}`)
+      .join("\n");
+
+    const prompt = PROMPT_TEMPLATE
+      .replace('{step_title}', step.title)
+      .replace('{step_description}', step.description)
+      .replace('{current_context}', formattedContext)
+      .replace('{fields}', fieldsText)
+      .replace('{field_format}', fieldFormat);
+
+    console.log('Generated AI prompt:', prompt);
+
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       max_tokens: 4096,
@@ -111,13 +131,12 @@ export async function getAiSuggestion(stepIndex: number, currentContext: any): P
       throw new Error('Empty response from AI');
     }
 
-    // Attempt to parse the JSON response
     try {
       const parsedResponse = JSON.parse(aiResponse);
       return parsedResponse;
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
-      // If parsing fails, return a structured error response
+      console.log('Raw AI response:', aiResponse);
       return {
         suggestion: "Sorry, I couldn't generate a proper suggestion at this time.",
         pre_filled_data: {}
@@ -125,7 +144,6 @@ export async function getAiSuggestion(stepIndex: number, currentContext: any): P
     }
   } catch (error) {
     console.error('Error getting AI suggestion:', error);
-    // Return a structured error response
     return {
       suggestion: "An error occurred while generating the AI suggestion.",
       pre_filled_data: {}

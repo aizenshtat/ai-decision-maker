@@ -18,18 +18,19 @@ model User {
   password      String
   decisions     Decision[]
   feedbacks     Feedback[]
+  customFrameworks CustomFramework[]
 }
 
 model Decision {
   id           String   @id @default(cuid())
   userId       String
   question     String
-  framework    String
-  data         Json
+  frameworkId  String?
+  framework    CustomFramework? @relation(fields: [frameworkId], references: [id])
   currentStep  Int      @default(0)
   createdAt    DateTime @default(now())
   status       String   @default("in_progress")
-  summary      String?
+  steps        Json
   user         User     @relation(fields: [userId], references: [id])
   feedbacks    Feedback[]
 }
@@ -43,4 +44,16 @@ model Feedback {
   createdAt  DateTime @default(now())
   user       User     @relation(fields: [userId], references: [id])
   decision   Decision @relation(fields: [decisionId], references: [id])
+}
+
+model CustomFramework {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  steps       Json
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  decisions   Decision[]
 }

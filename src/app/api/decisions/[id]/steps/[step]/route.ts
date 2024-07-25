@@ -10,59 +10,58 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string; step: string } }
 ) {
+  console.log('GET request received for decision step')
+  console.log('Params:', params)
+
   const session = await getServerSession(authOptions)
 
   if (!session || !session.user) {
+    console.log('User not authenticated')
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  const { id, step } = params
-  const stepIndex = parseInt(step)
-
   try {
+    const decisionId = params.id
+    const stepIndex = parseInt(params.step)
+
+    console.log('Fetching decision:', decisionId)
     const decision = await prisma.decision.findUnique({
-      where: { id: id }
+      where: { id: decisionId },
     })
 
     if (!decision) {
+      console.log('Decision not found')
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 })
     }
 
-    if (decision.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    console.log('Decision found:', decision)
+
+    let steps = decision.steps
+    if (typeof steps === 'object' && 'steps' in steps && Array.isArray(steps.steps)) {
+      steps = steps.steps
+    } else if (!Array.isArray(steps)) {
+      console.log('Invalid steps data:', steps)
+      return NextResponse.json({ error: 'Invalid steps data' }, { status: 500 })
     }
 
-    if (decision.status === 'completed') {
-      return NextResponse.json({
-        status: 'completed',
-        question: decision.question,
-        summary: decision.summary
-      })
+    console.log('Processed steps:', steps)
+
+    if (stepIndex < 0 || stepIndex >= steps.length) {
+      console.log('Invalid step index:', stepIndex)
+      return NextResponse.json({ error: 'Invalid step index' }, { status: 400 })
     }
 
-    const frameworkStep = PERSONAL_DECISION_FRAMEWORK.steps[stepIndex]
-    if (!frameworkStep) {
-      return NextResponse.json({ error: 'Step not found' }, { status: 404 })
+    const step = steps[stepIndex]
+    console.log('Step data:', step)
+
+    if (!step || typeof step !== 'object') {
+      console.log('Invalid step data:', step)
+      return NextResponse.json({ error: 'Invalid step data' }, { status: 500 })
     }
 
-    const savedData = decision.data[frameworkStep.title] || {}
-    const aiSuggestion = decision.data[`${frameworkStep.title}_ai_suggestion`] || ""
-
-    // Include all previous step data
-    const allStepData = {}
-    for (let i = 0; i <= stepIndex; i++) {
-      const currentStep = PERSONAL_DECISION_FRAMEWORK.steps[i]
-      allStepData[currentStep.title] = decision.data[currentStep.title] || {}
-    }
-
-    return NextResponse.json({
-      step: frameworkStep,
-      saved_data: savedData,
-      ai_suggestion: aiSuggestion,
-      all_step_data: allStepData
-    })
+    return NextResponse.json(step)
   } catch (error) {
     console.error('Error getting step:', error)
-    return NextResponse.json({ error: 'Error getting step' }, { status: 500 })
+    return NextResponse.json({ error: 'An error occurred while getting the step' }, { status: 500 })
   }
 }

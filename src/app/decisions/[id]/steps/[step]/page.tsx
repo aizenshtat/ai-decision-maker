@@ -76,39 +76,6 @@ export default function DecisionStep() {
     }
   }
 
-  const fetchStepData = async () => {
-    try {
-      const response = await fetch(`/api/decisions/${id}/steps/${step}`)
-      if (!response.ok) throw new Error('Failed to fetch step data')
-      const data = await response.json()
-      console.log('Fetched step data:', data);
-      
-      if (data.status === 'completed') {
-        setStepData({ status: 'completed', question: data.question })
-        return data
-      }
-      
-      setStepData(data.step)
-      setAllStepData(data.all_step_data || {})
-      
-      if (data.saved_data && Object.keys(data.saved_data).length > 0) {
-        setInputs(data.saved_data)
-        if (data.ai_suggestion) {
-          setAiSuggestion(data.ai_suggestion)
-          localStorage.setItem(`aiData_${id}_${step}`, JSON.stringify({
-            suggestion: data.ai_suggestion,
-            pre_filled_data: data.saved_data
-          }))
-        }
-      }
-      return data
-    } catch (error) {
-      console.error('Error fetching step data:', error)
-      setError('Failed to load step data. Please try again.')
-      throw error
-    }
-  }
-
   const fetchAiSuggestion = async () => {
     try {
       const response = await fetch(`/api/decisions/${id}/suggestions?step=${step}`)
@@ -129,6 +96,32 @@ export default function DecisionStep() {
     } catch (error) {
       console.error('Error fetching AI suggestion:', error)
       setError('Failed to load AI suggestion. Please try again.')
+    }
+  }
+
+  const fetchStepData = async () => {
+    try {
+      const response = await fetch(`/api/decisions/${id}/steps/${step}`)
+      if (!response.ok) throw new Error('Failed to fetch step data')
+      const data = await response.json()
+      console.log('Fetched step data:', data);
+      
+      if (data.status === 'completed') {
+        setStepData({ status: 'completed', question: data.question })
+        return data
+      }
+      
+      setStepData(data)
+      setAllStepData(data.all_step_data || {})
+      
+      if (data.saved_data && Object.keys(data.saved_data).length > 0) {
+        setInputs(data.saved_data)
+      }
+      return data
+    } catch (error) {
+      console.error('Error fetching step data:', error)
+      setError('Failed to load step data. Please try again.')
+      throw error
     }
   }
 
@@ -306,7 +299,8 @@ export default function DecisionStep() {
     )
   }
 
-  if (!stepData) return <div className="text-center mt-10">No steps available for this decision.</div>
+  if (!stepData) return <div className="text-center mt-10">Loading decision data...</div>
+  if (!stepData.fields) return <div className="text-center mt-10">No steps available for this decision.</div>
 
   return (
     <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
@@ -314,7 +308,7 @@ export default function DecisionStep() {
       <p className="mb-5">{stepData.description}</p>
       
       <form onSubmit={handleSubmit} className="space-y-6">
-        {stepData?.fields.map((field) => (
+        {stepData.fields.map((field) => (
           <div key={field.name} className="bg-gray-50 p-6 rounded-lg">
             {renderField(field)}
             {validationErrors[field.name] && (

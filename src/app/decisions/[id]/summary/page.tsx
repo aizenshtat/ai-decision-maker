@@ -12,6 +12,7 @@ export default function DecisionSummary() {
   const [summary, setSummary] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [frameworkName, setFrameworkName] = useState('')
   const params = useParams()
   const { id } = params
 
@@ -21,6 +22,7 @@ export default function DecisionSummary() {
       if (!response.ok) throw new Error('Failed to fetch summary')
       const data = await response.json()
       setSummary(data.summary)
+      setFrameworkName(data.frameworkName)
     } catch (error) {
       console.error('Error fetching summary:', error)
       setError('Failed to load decision summary. Please try again.')
@@ -55,6 +57,7 @@ export default function DecisionSummary() {
           {summary}
         </ReactMarkdown>
       </div>
+      <p className="text-gray-600 mb-4">Framework: {frameworkName}</p>
       <div className="mt-6 flex justify-between">
         <Link href="/dashboard" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
           Back to Dashboard
