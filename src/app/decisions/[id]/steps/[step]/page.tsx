@@ -33,6 +33,7 @@ export default function DecisionStep() {
   const step = params.step as string
   const [aiSuggestion, setAiSuggestion] = useState('')
   const dataFetchedRef = useRef(false)
+  const [summary, setSummary] = useState('')
 
   useEffect(() => {
     if (dataFetchedRef.current) return;
@@ -42,15 +43,22 @@ export default function DecisionStep() {
       setIsLoading(true)
       setError('')
       try {
-        await fetchStepData()
-        await loadOrFetchAiSuggestion()
+        const decisionData = await fetchStepData()
+        if (decisionData.status === 'completed') {
+          const summaryResponse = await fetch(`/api/decisions/${id}/summary`)
+          const summaryData = await summaryResponse.json()
+          setSummary(summaryData.summary)
+        } else {
+          await loadOrFetchAiSuggestion()
+        }
       } catch (err) {
-        setError('Failed to load step data or AI suggestion. Please try again.')
+        setError('Failed to load decision data. Please try again.')
         console.error('Error fetching data:', err)
       } finally {
         setIsLoading(false)
       }
     }
+
     fetchData()
   }, [id, step])
 
@@ -74,6 +82,12 @@ export default function DecisionStep() {
       if (!response.ok) throw new Error('Failed to fetch step data')
       const data = await response.json()
       console.log('Fetched step data:', data);
+      
+      if (data.status === 'completed') {
+        setStepData({ status: 'completed', question: data.question })
+        return data
+      }
+      
       setStepData(data.step)
       setAllStepData(data.all_step_data || {})
       
@@ -87,6 +101,7 @@ export default function DecisionStep() {
           }))
         }
       }
+      return data
     } catch (error) {
       console.error('Error fetching step data:', error)
       setError('Failed to load step data. Please try again.')
@@ -273,9 +288,25 @@ export default function DecisionStep() {
     }
   };
 
-  if (isLoading) return <div className="text-center mt-10">Loading...</div>
+  if (isLoading) return <div className="text-center mt-10">Loading decision data...</div>
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>
-  if (!stepData) return null
+
+  if (stepData?.status === 'completed') {
+    return (
+      <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold mb-5">{stepData.question}</h1>
+        <h2 className="text-xl font-semibold mb-4">Decision Summary</h2>
+        <div className="bg-gray-100 p-4 rounded-md mb-6">
+          <ReactMarkdown>{summary}</ReactMarkdown>
+        </div>
+        <Link href="/dashboard" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+          Back to Dashboard
+        </Link>
+      </div>
+    )
+  }
+
+  if (!stepData) return <div className="text-center mt-10">No steps available for this decision.</div>
 
   return (
     <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">

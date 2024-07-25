@@ -32,6 +32,14 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
+    if (decision.status === 'completed') {
+      return NextResponse.json({
+        status: 'completed',
+        question: decision.question,
+        summary: decision.summary
+      })
+    }
+
     const frameworkStep = PERSONAL_DECISION_FRAMEWORK.steps[stepIndex]
     if (!frameworkStep) {
       return NextResponse.json({ error: 'Step not found' }, { status: 404 })

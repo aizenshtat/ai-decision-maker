@@ -17,9 +17,10 @@ interface ListOfObjectsFieldProps {
   };
   value: { [key: string]: string | number }[] | undefined;
   onChange: (value: { [key: string]: string | number }[]) => void;
+  isEditable?: boolean;
 }
 
-const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, onChange }) => {
+const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, onChange, isEditable = true }) => {
   const [error, setError] = useState<string | null>(null);
   const [internalValue, setInternalValue] = useState<{ [key: string]: string | number }[]>([]);
 
@@ -110,21 +111,29 @@ const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, o
     <div className="space-y-4">
       <Label>{field.label}</Label>
       {internalValue.map((item, index) => (
-        <Card key={index}>
+        <div key={index} className="bg-white shadow-sm rounded-lg p-4">
           {Object.entries(field.object_structure).map(([key, type]) => (
             <div key={key} className="mb-4">
-              <Label htmlFor={`${field.name}-${index}-${key}`}>{key}</Label>
-              {renderInputField(item, index, key, type)}
+              <Label htmlFor={`${field.name}-${index}-${key}`} className="font-medium text-gray-700">{key}</Label>
+              {isEditable ? (
+                renderInputField(item, index, key, type)
+              ) : (
+                <p className="mt-1">{item[key]}</p>
+              )}
             </div>
           ))}
-          <Button onClick={() => handleRemove(index)} className="bg-red-500 hover:bg-red-600">
-            Remove
-          </Button>
-        </Card>
+          {isEditable && (
+            <Button onClick={() => handleRemove(index)} className="bg-red-500 hover:bg-red-600 text-white">
+              Remove
+            </Button>
+          )}
+        </div>
       ))}
-      <Button onClick={handleAdd} className="bg-green-500 hover:bg-green-600">
-        Add Item
-      </Button>
+      {isEditable && (
+        <Button onClick={handleAdd} className="bg-green-500 hover:bg-green-600 text-white">
+          Add Item
+        </Button>
+      )}
       {error && <ErrorMessage>{error}</ErrorMessage>}
     </div>
   );
