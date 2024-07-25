@@ -32,18 +32,18 @@ export default function DecisionStep() {
   const id = params.id as string
   const step = params.step as string
   const [aiSuggestion, setAiSuggestion] = useState('')
-  const suggestionFetchedRef = useRef(false)
+  const dataFetchedRef = useRef(false)
 
   useEffect(() => {
+    if (dataFetchedRef.current) return;
+    dataFetchedRef.current = true;
+
     const fetchData = async () => {
       setIsLoading(true)
       setError('')
       try {
         await fetchStepData()
-        if (!suggestionFetchedRef.current) {
-          await fetchAiSuggestion()
-          suggestionFetchedRef.current = true
-        }
+        await loadOrFetchAiSuggestion()
       } catch (err) {
         setError('Failed to load step data or AI suggestion. Please try again.')
         console.error('Error fetching data:', err)
@@ -51,28 +51,48 @@ export default function DecisionStep() {
         setIsLoading(false)
       }
     }
-
     fetchData()
   }, [id, step])
 
+  const loadOrFetchAiSuggestion = async () => {
+    const cachedData = localStorage.getItem(`aiData_${id}_${step}`)
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData)
+      setAiSuggestion(parsedData.suggestion)
+      setInputs(prevInputs => ({
+        ...prevInputs,
+        ...parsedData.pre_filled_data
+      }))
+    } else {
+      await fetchAiSuggestion()
+    }
+  }
+
   const fetchStepData = async () => {
-    setIsLoading(true)
     try {
       const response = await fetch(`/api/decisions/${id}/steps/${step}`)
       if (!response.ok) throw new Error('Failed to fetch step data')
       const data = await response.json()
       console.log('Fetched step data:', data);
       setStepData(data.step)
-      setInputs(data.saved_data || {})
       setAllStepData(data.all_step_data || {})
+      
+      if (data.saved_data && Object.keys(data.saved_data).length > 0) {
+        setInputs(data.saved_data)
+        if (data.ai_suggestion) {
+          setAiSuggestion(data.ai_suggestion)
+          localStorage.setItem(`aiData_${id}_${step}`, JSON.stringify({
+            suggestion: data.ai_suggestion,
+            pre_filled_data: data.saved_data
+          }))
+        }
+      }
     } catch (error) {
       console.error('Error fetching step data:', error)
       setError('Failed to load step data. Please try again.')
-    } finally {
-      setIsLoading(false)
+      throw error
     }
   }
-
 
   const fetchAiSuggestion = async () => {
     try {
@@ -82,11 +102,11 @@ export default function DecisionStep() {
       
       if (data.suggestion && data.pre_filled_data) {
         setAiSuggestion(data.suggestion)
-        // Merge the pre-filled data with existing inputs
         setInputs(prevInputs => ({
           ...prevInputs,
           ...data.pre_filled_data
         }))
+        localStorage.setItem(`aiData_${id}_${step}`, JSON.stringify(data))
       } else {
         console.error('Invalid AI suggestion format:', data)
         setError('Failed to parse AI suggestion. Please try again.')
