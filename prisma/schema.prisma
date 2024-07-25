@@ -1,0 +1,46 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String?
+  email         String?    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String
+  decisions     Decision[]
+  feedbacks     Feedback[]
+}
+
+model Decision {
+  id           String   @id @default(cuid())
+  userId       String
+  question     String
+  framework    String
+  data         Json
+  currentStep  Int      @default(0)
+  createdAt    DateTime @default(now())
+  status       String   @default("in_progress")
+  summary      String?
+  user         User     @relation(fields: [userId], references: [id])
+  feedbacks    Feedback[]
+}
+
+model Feedback {
+  id         String   @id @default(cuid())
+  userId     String
+  decisionId String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  decision   Decision @relation(fields: [decisionId], references: [id])
+}
