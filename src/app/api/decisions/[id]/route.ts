@@ -40,3 +40,41 @@ export async function DELETE(
     return NextResponse.json({ error: 'An error occurred while deleting the decision' }, { status: 500 })
   }
 }
+
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const id = params.id
+    const decision = await prisma.decision.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        feedbacks: true
+      },
+    })
+
+    if (!decision) {
+      return NextResponse.json({ error: 'Decision not found' }, { status: 404 })
+    }
+
+    // Parse the steps data if it's stored as a JSON string
+    const parsedSteps = decision.steps ? JSON.parse(decision.steps as string) : [];
+
+    const formattedDecision = {
+      ...decision,
+      steps: parsedSteps,
+    }
+
+    return NextResponse.json(formattedDecision)
+  } catch (error) {
+    console.error('Error fetching decision:', error)
+    return NextResponse.json({ error: 'An error occurred while fetching the decision' }, { status: 500 })
+  }
+}

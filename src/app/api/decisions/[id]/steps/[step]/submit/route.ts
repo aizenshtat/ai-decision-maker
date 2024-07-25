@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../../../../../auth/[...nextauth]/route'
 import { PERSONAL_DECISION_FRAMEWORK } from '@/lib/decisionFramework'
+import { getAiSuggestion, generateDecisionSummary } from '@/services/aiSuggestionService'
 
 export async function POST(
   request: Request,
@@ -51,13 +52,12 @@ export async function POST(
     })
 
     if (updatedDecision.status === 'completed') {
-      // Generate and save summary
-      const summary = await getAiSuggestion(/* provide necessary data for summary generation */)
+      const summary = await generateDecisionSummary(updatedDecision.data)
       await prisma.decision.update({
         where: { id: id },
-        data: { summary: summary }
+        data: { summary }
       })
-      return NextResponse.json({ completed: true, summary: summary })
+      return NextResponse.json({ completed: true, summary })
     }
 
     return NextResponse.json({ completed: false })

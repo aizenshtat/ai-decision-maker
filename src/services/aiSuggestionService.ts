@@ -132,3 +132,30 @@ export async function getAiSuggestion(stepIndex: number, currentContext: any): P
     };
   }
 }
+
+export async function generateDecisionSummary(question: string, steps: any[]): Promise<string> {
+  const prompt = `Summarize the following decision-making process in markdown format:
+Question: ${question}
+
+Steps:
+${JSON.stringify(steps, null, 2)}
+
+Please provide a comprehensive summary that includes:
+1. The main question or problem
+2. Key considerations and options explored (if available)
+3. The final decision or recommendation (if available)
+4. Brief justification for the decision (if available)
+
+If some information is not available, please mention that in the summary.
+
+Format the summary using markdown syntax, including headers, lists, and emphasis where appropriate.`;
+
+  const response = await anthropic.messages.create({
+    model: "claude-3-5-sonnet-20240620",
+    max_tokens: 4096,
+    messages: [{ role: "user", content: prompt}]
+  });
+
+  const summary = response.content[0]?.text || "Unable to generate summary.";
+  return summary;
+}
