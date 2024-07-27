@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const frameworks = await prisma.customFramework.findMany({
+    const frameworks = await prisma.framework.findMany({
       where: {
         OR: [
           { userId: session.user.id },
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   try {
     const { name, description, steps } = await request.json()
 
-    const framework = await prisma.customFramework.create({
+    const framework = await prisma.framework.create({
       data: {
         name,
         description,

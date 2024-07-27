@@ -2,7 +2,7 @@
 
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
@@ -12,13 +12,15 @@ import ListOfObjectsField from '@/components/ListOfObjectsField'
 import ListField from '@/components/ListField'
 import SelectField from '@/components/SelectField'
 import TextField from '@/components/TextField'
-import { PERSONAL_DECISION_FRAMEWORK } from '@/lib/decisionFramework'
 import { Card, Button, Input, Label, ErrorMessage } from '@/components/ui'
+import Link from 'next/link'
 
 interface StepData {
-  title: string;
-  description: string;
-  fields: any[];
+  title?: string;
+  description?: string;
+  fields?: any[];
+  status?: 'completed';
+  question?: string;
 }
 
 export default function DecisionStep() {
@@ -106,16 +108,11 @@ export default function DecisionStep() {
       const data = await response.json()
       console.log('Fetched step data:', data);
       
-      if (data.status === 'completed') {
-        setStepData({ status: 'completed', question: data.question })
-        return data
-      }
+      setStepData(data.currentStep)
+      setAllStepData(data.allStepData || {})
       
-      setStepData(data)
-      setAllStepData(data.all_step_data || {})
-      
-      if (data.saved_data && Object.keys(data.saved_data).length > 0) {
-        setInputs(data.saved_data)
+      if (data.savedData && Object.keys(data.savedData).length > 0) {
+        setInputs(data.savedData)
       }
       return data
     } catch (error) {
@@ -299,8 +296,7 @@ export default function DecisionStep() {
     )
   }
 
-  if (!stepData) return <div className="text-center mt-10">Loading decision data...</div>
-  if (!stepData.fields) return <div className="text-center mt-10">No steps available for this decision.</div>
+  if (!stepData || !stepData.fields) return <div className="text-center mt-10">No steps available for this decision.</div>
 
   return (
     <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">

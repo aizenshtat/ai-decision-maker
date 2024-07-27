@@ -31,6 +31,7 @@ export default async function RootLayout({
               {session ? (
                 <>
                   <Link href="/dashboard" className="hover:text-gray-300">Dashboard</Link>
+                  <Link href="/frameworks" className="hover:text-gray-300">Frameworks</Link>
                   <LogoutButton />
                 </>
               ) : (

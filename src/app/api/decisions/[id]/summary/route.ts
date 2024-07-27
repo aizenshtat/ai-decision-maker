@@ -24,8 +24,8 @@ export async function GET(
 
     if (!summary) {
       // Generate summary if it doesn't exist
-      const steps = decision.steps ? JSON.parse(decision.steps as string) : [];
-      summary = await generateDecisionSummary(decision.question, steps);
+      const data = decision.data ? JSON.parse(decision.data as string) : [];
+      summary = await generateDecisionSummary(decision.question, data);
       
       // Save the generated summary
       await prisma.decision.update({

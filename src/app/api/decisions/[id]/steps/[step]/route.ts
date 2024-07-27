@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../../../../auth/[...nextauth]/route'
-import { PERSONAL_DECISION_FRAMEWORK } from '@/lib/decisionFramework'
+import { getAiSuggestion } from '@/services/aiSuggestionService'
 
 export async function GET(
   request: Request,
@@ -13,55 +13,81 @@ export async function GET(
   console.log('GET request received for decision step')
   console.log('Params:', params)
 
-  const session = await getServerSession(authOptions)
-
-  if (!session || !session.user) {
-    console.log('User not authenticated')
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
   try {
-    const decisionId = params.id
-    const stepIndex = parseInt(params.step)
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-    console.log('Fetching decision:', decisionId)
+    const { id, step } = params
+    console.log('Fetching decision:', id)
+
     const decision = await prisma.decision.findUnique({
-      where: { id: decisionId },
+      where: { id },
+      include: { framework: true },
     })
 
     if (!decision) {
-      console.log('Decision not found')
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 })
+    }
+
+    // Add this check
+    if (decision.userId !== session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
     console.log('Decision found:', decision)
 
-    let steps = decision.steps
-    if (typeof steps === 'object' && 'steps' in steps && Array.isArray(steps.steps)) {
-      steps = steps.steps
-    } else if (!Array.isArray(steps)) {
-      console.log('Invalid steps data:', steps)
+    let steps
+    try {
+      steps = typeof decision.framework.steps === 'string' 
+        ? JSON.parse(decision.framework.steps)
+        : decision.framework.steps;
+      
+      if (!Array.isArray(steps)) {
+        throw new Error('Steps is not an array')
+      }
+    } catch (error) {
+      console.error('Invalid steps data:', decision.framework.steps)
       return NextResponse.json({ error: 'Invalid steps data' }, { status: 500 })
     }
 
-    console.log('Processed steps:', steps)
-
-    if (stepIndex < 0 || stepIndex >= steps.length) {
-      console.log('Invalid step index:', stepIndex)
-      return NextResponse.json({ error: 'Invalid step index' }, { status: 400 })
+    const stepIndex = Number(step)
+    if (!steps[stepIndex]) {
+      return NextResponse.json({ error: 'Step not found' }, { status: 404 })
     }
 
-    const step = steps[stepIndex]
-    console.log('Step data:', step)
+    const currentStep = steps[stepIndex]
+    
+    // Handle decision.data safely
+    const allStepData: Record<number, any> = typeof decision.data === 'string' 
+      ? JSON.parse(decision.data || '{}')
+      : decision.data || {};
 
-    if (!step || typeof step !== 'object') {
-      console.log('Invalid step data:', step)
-      return NextResponse.json({ error: 'Invalid step data' }, { status: 500 })
+    const savedData = allStepData[stepIndex] || {}
+
+    // Get AI suggestion
+    const context: Record<string, any> = {
+      initialQuestion: decision.question,
+      ...allStepData
+    };
+
+    let aiSuggestion;
+    if (allStepData[currentStep.title] && allStepData[currentStep.title].ai_suggestion) {
+      aiSuggestion = allStepData[currentStep.title].ai_suggestion;
+    } else {
+      aiSuggestion = await getAiSuggestion(decision.frameworkId, stepIndex, context);
     }
 
-    return NextResponse.json(step)
+    return NextResponse.json({ 
+      currentStep, 
+      allStepData, 
+      savedData,
+      aiSuggestion
+    })
+
   } catch (error) {
-    console.error('Error getting step:', error)
-    return NextResponse.json({ error: 'An error occurred while getting the step' }, { status: 500 })
+    console.error('Error fetching step data:', error)
+    return NextResponse.json({ error: 'An error occurred while fetching the step data' }, { status: 500 })
   }
 }

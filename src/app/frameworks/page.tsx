@@ -33,6 +33,17 @@ export default function Frameworks() {
     }
   }
 
+  const handleDeleteFramework = async (id: string) => {
+    try {
+      const response = await fetch(`/api/frameworks/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete framework');
+      setFrameworks(frameworks.filter(framework => framework.id !== id));
+    } catch (error) {
+      console.error('Error deleting framework:', error);
+      setError('Failed to delete framework. Please try again.');
+    }
+  }
+
   if (isLoading) return <div className="text-center mt-10">Loading frameworks...</div>
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>
 

@@ -19,7 +19,7 @@ export async function DELETE(
 
   try {
     const decision = await prisma.decision.findUnique({
-      where: { id: id }
+      where: { id }
     })
 
     if (!decision) {
@@ -56,7 +56,8 @@ export async function GET(
       where: { id },
       include: {
         user: true,
-        feedbacks: true
+        feedbacks: true,
+        framework: true // Include the framework
       },
     })
 

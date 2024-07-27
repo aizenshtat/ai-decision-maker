@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
     console.log('User found:', user.id)
 
-    const framework = await prisma.customFramework.findUnique({
+    const framework = await prisma.framework.findUnique({
       where: { id: frameworkId },
     })
 
@@ -45,7 +45,9 @@ export async function POST(request: Request) {
         question,
         userId: user.id,
         frameworkId: framework.id,
-        steps: framework.steps,
+        data: {},
+        currentStep: 0,
+        status: 'in_progress',
       },
     })
     console.log('Decision created:', decision)

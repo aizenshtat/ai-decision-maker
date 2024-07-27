@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 export default function NewDecision() {
   const [question, setQuestion] = useState('')
-  const [frameworkId, setFrameworkId] = useState('default')
+  const [frameworkId, setFrameworkId] = useState('')
   const [frameworks, setFrameworks] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -21,6 +21,10 @@ export default function NewDecision() {
       if (!response.ok) throw new Error('Failed to fetch frameworks')
       const data = await response.json()
       setFrameworks(data)
+      // Set the first framework as default if available
+      if (data.length > 0) {
+        setFrameworkId(data[0].id)
+      }
     } catch (error) {
       console.error('Error fetching frameworks:', error)
       setError('Failed to load frameworks. Please try again.')
@@ -83,7 +87,7 @@ export default function NewDecision() {
             required
             className="w-full p-2 border border-gray-300 rounded"
           >
-            <option value="default">Default Personal Decision Framework</option>
+            <option value="">Select a framework</option>
             {frameworks.map((framework) => (
               <option key={framework.id} value={framework.id}>{framework.name}</option>
             ))}
@@ -91,7 +95,7 @@ export default function NewDecision() {
         </div>
         <button
           type="submit"
-          disabled={isLoading}
+          disabled={isLoading || !frameworkId}
           className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
         >
           {isLoading ? 'Processing...' : 'Start Decision Process'}

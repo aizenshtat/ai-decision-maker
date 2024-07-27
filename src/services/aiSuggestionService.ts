@@ -82,7 +82,7 @@ function generateFieldDescription(field: any): string {
 export async function getAiSuggestion(frameworkId: string, stepIndex: number, context: any) {
   try {
     console.log(`Getting AI suggestion for framework ${frameworkId}, step ${stepIndex}`);
-    const framework = await prisma.customFramework.findUnique({
+    const framework = await prisma.framework.findUnique({
       where: { id: frameworkId }
     });
 
@@ -92,10 +92,9 @@ export async function getAiSuggestion(frameworkId: string, stepIndex: number, co
       throw new Error('Framework not found');
     }
 
-    const steps = typeof framework.steps === 'string' ? JSON.parse(framework.steps) : framework.steps;
-    console.log('Parsed steps:', JSON.stringify(steps, null, 2));
-
-    const step = steps.steps[stepIndex];
+    const steps = Array.isArray(framework.steps) ? framework.steps : 
+                  (typeof framework.steps === 'string' ? JSON.parse(framework.steps) : []);
+    const step = steps[stepIndex];
     console.log('Current step:', JSON.stringify(step, null, 2));
 
     if (!step) {
@@ -105,9 +104,11 @@ export async function getAiSuggestion(frameworkId: string, stepIndex: number, co
     const fieldsText = step.fields.map(generateFieldDescription).join("\n");
     const fieldFormat = generateFieldFormat(step.fields);
 
-    const formattedContext = Object.entries(context)
-      .map(([key, value]) => `${key}:\n${JSON.stringify(value, null, 2)}`)
-      .join("\n");
+    const formattedContext = `Initial Question: ${context.initialQuestion}\n\n` +
+      Object.entries(context)
+        .filter(([key]) => key !== 'initialQuestion')
+        .map(([key, value]) => `${key}:\n${JSON.stringify(value, null, 2)}`)
+        .join("\n");
 
     const prompt = PROMPT_TEMPLATE
       .replace('{step_title}', step.title)
@@ -124,7 +125,7 @@ export async function getAiSuggestion(frameworkId: string, stepIndex: number, co
       messages: [{ role: "user", content: prompt}]
     });
 
-    const aiResponse = response.content[0].text;
+    const aiResponse = response.content[0].type === 'text' ? response.content[0].text : '';
     console.log('AI response:', aiResponse);
 
     if (!aiResponse) {
@@ -151,12 +152,12 @@ export async function getAiSuggestion(frameworkId: string, stepIndex: number, co
   }
 }
 
-export async function generateDecisionSummary(question: string, steps: any[]): Promise<string> {
+export async function generateDecisionSummary(question: string, data: any[]): Promise<string> {
   const prompt = `Summarize the following decision-making process in markdown format:
 Question: ${question}
 
 Steps:
-${JSON.stringify(steps, null, 2)}
+${JSON.stringify(data, null, 2)}
 
 Please provide a comprehensive summary that includes:
 1. The main question or problem
@@ -174,6 +175,6 @@ Format the summary using markdown syntax, including headers, lists, and emphasis
     messages: [{ role: "user", content: prompt}]
   });
 
-  const summary = response.content[0]?.text || "Unable to generate summary.";
+  const summary = response.content[0].type === 'text' ? response.content[0].text : "Unable to generate summary.";
   return summary;
 }
