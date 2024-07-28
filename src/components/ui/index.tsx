@@ -19,11 +19,20 @@ export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = (
   </button>
 );
 
-export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement>> = ({ className, ...props }) => (
-  <input
-    className={`w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${className}`}
-    {...props}
-  />
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  id: string;
+}
+
+export const Input: React.FC<InputProps> = ({ label, id, className, ...props }) => (
+  <div className="mb-4">
+    {label && <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+    <input
+      id={id}
+      className={`w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${className}`}
+      {...props}
+    />
+  </div>
 );
 
 export const Label: React.FC<React.LabelHTMLAttributes<HTMLLabelElement>> = ({ children, className, ...props }) => (
@@ -37,3 +46,24 @@ export const ErrorMessage: React.FC<React.HTMLProps<HTMLParagraphElement>> = ({ 
     {children}
   </p>
 );
+
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
+  id: string;
+}
+
+export const Textarea: React.FC<TextareaProps> = ({ label, id, className, ...props }) => (
+  <div className="mb-4">
+    {label && <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+    <textarea
+      id={id}
+      className={`w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${className}`}
+      {...props}
+    />
+  </div>
+);
+
+import { IconButton } from '../IconButton';
+import { Select } from '../Select';
+
+export { IconButton, Select };

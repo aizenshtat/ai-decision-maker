@@ -5,15 +5,51 @@ export interface Framework {
   steps: Step[];
 }
 
-interface Step {
+export interface Step {
   title: string;
   description?: string;
+  ai_instructions?: string;
   fields: Field[];
 }
 
-interface Field {
+export interface Field {
   name: string;
   label: string;
   type: string;
-  // Add other properties as needed
+  description?: string;
+  placeholder?: string;
+  object_structure?: ObjectStructure;
+  matrix_structure?: MatrixStructure;
+  cell_format?: CellFormat;
+  validation?: Validation;
+  dependencies?: Dependency | { [key: string]: Dependency };
+}
+
+export interface ObjectStructure {
+  [key: string]: string | { type: string; min?: number; max?: number; step?: number };
+}
+
+export interface MatrixStructure {
+  rows: string;
+  columns: string;
+}
+
+export interface CellFormat {
+  type: string;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+export interface Validation {
+  [key: string]: {
+    max: number;
+    message: string;
+  };
+}
+
+export interface Dependency {
+  step: string;
+  field: string;
+  use: string;
 }

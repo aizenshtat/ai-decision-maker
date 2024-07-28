@@ -58,6 +58,9 @@ export default function Frameworks() {
           <div key={framework.id} className="bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-2">{framework.name}</h2>
             <p className="text-gray-600 mb-4">{framework.description}</p>
+            <Link href={`/frameworks/${framework.id}`} className="text-blue-500 hover:text-blue-700 mr-4">
+              View Details
+            </Link>
             {framework.id !== 'default' && (
               <>
                 <Link href={`/frameworks/${framework.id}/edit`} className="text-blue-500 hover:text-blue-700 mr-4">
