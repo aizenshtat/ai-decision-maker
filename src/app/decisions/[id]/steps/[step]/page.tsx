@@ -14,6 +14,7 @@ import SelectField from '@/components/SelectField'
 import TextField from '@/components/TextField'
 import { Card, Button, Input, Label, ErrorMessage } from '@/components/ui'
 import Link from 'next/link'
+import { handleClientError } from '@/utils/errorHandling'
 
 type StepData = {
   title: string;
@@ -42,10 +43,12 @@ export default function DecisionStep() {
 
   const fetchStepData = useCallback(async () => {
     setIsLoading(true);
-    setError('');
+    setError(null);
     try {
       const response = await fetch(`/api/decisions/${id}/steps/${step}`);
-      if (!response.ok) throw new Error('Failed to fetch step data');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       console.log('Fetched step data:', data);
       
@@ -65,9 +68,7 @@ export default function DecisionStep() {
 
       return data;
     } catch (error) {
-      console.error('Error fetching step data:', error);
-      setError('Failed to load step data. Please try again.');
-      throw error;
+      setError(handleClientError(error));
     } finally {
       setIsLoading(false);
     }
@@ -94,8 +95,7 @@ export default function DecisionStep() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to submit step')
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json()
@@ -108,8 +108,7 @@ export default function DecisionStep() {
         router.push(`/decisions/${id}/steps/${parseInt(step) - 1}`)
       }
     } catch (error) {
-      console.error('Error submitting step:', error)
-      setError(error instanceof Error ? error.message : 'Failed to submit step. Please try again.')
+      setError(handleClientError(error));
     } finally {
       setIsLoading(false)
     }

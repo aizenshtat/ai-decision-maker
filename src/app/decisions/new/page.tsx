@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { handleClientError } from '@/utils/errorHandling'
+import { Framework } from '@/types/framework'
 
 export default function NewDecision() {
   const [question, setQuestion] = useState('')
   const [frameworkId, setFrameworkId] = useState('')
-  const [frameworks, setFrameworks] = useState([])
+  const [frameworks, setFrameworks] = useState<Framework[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -21,13 +23,11 @@ export default function NewDecision() {
       if (!response.ok) throw new Error('Failed to fetch frameworks')
       const data = await response.json()
       setFrameworks(data)
-      // Set the first framework as default if available
       if (data.length > 0) {
         setFrameworkId(data[0].id)
       }
     } catch (error) {
-      console.error('Error fetching frameworks:', error)
-      setError('Failed to load frameworks. Please try again.')
+      setError(handleClientError(error))
     }
   }
 
@@ -50,13 +50,9 @@ export default function NewDecision() {
       }
 
       const data = await response.json()
-      if (data.error) {
-        throw new Error(data.error)
-      }
       router.push(`/decisions/${data.id}/steps/0`)
     } catch (error) {
-      console.error('Error starting decision:', error)
-      setError('Failed to start decision. Please try again.')
+      setError(handleClientError(error))
     } finally {
       setIsLoading(false)
     }

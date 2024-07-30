@@ -5,16 +5,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-
-interface Decision {
-  id: string;
-  question: string;
-  framework: string;
-  createdAt: string;
-  status: string;
-  currentStep: number;
-  totalSteps: number;
-}
+import { Decision } from '@/types/decision'
+import { handleClientError } from '@/utils/errorHandling'
 
 export default function Dashboard() {
   const [decisions, setDecisions] = useState<Decision[]>([])
@@ -29,12 +21,13 @@ export default function Dashboard() {
   const fetchDecisions = async () => {
     try {
       const response = await fetch('/api/decisions')
-      if (!response.ok) throw new Error('Failed to fetch decisions')
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       const data = await response.json()
       setDecisions(data)
     } catch (error) {
-      console.error('Error fetching decisions:', error)
-      setError('Failed to load decisions. Please try again.')
+      setError(handleClientError(error))
     } finally {
       setIsLoading(false)
     }
@@ -44,11 +37,12 @@ export default function Dashboard() {
     if (confirm('Are you sure you want to delete this decision?')) {
       try {
         const response = await fetch(`/api/decisions/${id}`, { method: 'DELETE' })
-        if (!response.ok) throw new Error('Failed to delete decision')
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
         setDecisions(decisions.filter(decision => decision.id !== id))
       } catch (error) {
-        console.error('Error deleting decision:', error)
-        setError('Failed to delete decision. Please try again.')
+        setError(handleClientError(error))
       }
     }
   }

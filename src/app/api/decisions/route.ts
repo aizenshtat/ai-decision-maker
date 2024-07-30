@@ -4,12 +4,13 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../auth/[...nextauth]/route'
+import { AppError, handleApiError, createApiErrorResponse } from '@/utils/errorHandling'
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
     if (!session || !session.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      throw new AppError('Not authenticated', 401)
     }
 
     const decisions = await prisma.decision.findMany({
@@ -43,7 +44,6 @@ export async function GET() {
 
     return NextResponse.json(formattedDecisions)
   } catch (error) {
-    console.error('Error fetching decisions:', error)
-    return NextResponse.json({ error: 'An error occurred while fetching decisions' }, { status: 500 })
+    return handleApiError(error)
   }
 }

@@ -4,6 +4,7 @@
 
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { handleClientError } from '@/utils/errorHandling'
 
 export default function FeedbackSubmission() {
   const [rating, setRating] = useState(0)
@@ -32,8 +33,7 @@ export default function FeedbackSubmission() {
 
       router.push('/dashboard')
     } catch (error) {
-      console.error('Error submitting feedback:', error)
-      setError('Failed to submit feedback. Please try again.')
+      setError(handleClientError(error))
     } finally {
       setIsSubmitting(false)
     }

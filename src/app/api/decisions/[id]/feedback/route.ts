@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '../../../auth/[...nextauth]/route'
+import { AppError, handleApiError } from '@/utils/errorHandling'
 
 export async function POST(
   request: Request,
@@ -13,7 +14,7 @@ export async function POST(
     const session = await getServerSession(authOptions)
 
     if (!session || !session.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      throw new AppError('Not authenticated', 401)
     }
 
     const { id } = params
@@ -24,11 +25,11 @@ export async function POST(
     })
 
     if (!decision) {
-      return NextResponse.json({ error: 'Decision not found' }, { status: 404 })
+      throw new AppError('Decision not found', 404)
     }
 
     if (decision.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+      throw new AppError('Unauthorized', 403)
     }
 
     const feedback = await prisma.feedback.create({
@@ -42,7 +43,6 @@ export async function POST(
 
     return NextResponse.json({ message: 'Feedback submitted successfully' }, { status: 201 })
   } catch (error) {
-    console.error('Error submitting feedback:', error)
-    return NextResponse.json({ error: 'An error occurred while submitting feedback' }, { status: 500 })
+    return handleApiError(error)
   }
 }

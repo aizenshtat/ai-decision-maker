@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../../../../auth/[...nextauth]/route'
 import { getAiSuggestion } from '@/services/aiSuggestionService'
+import { AppError, handleApiError } from '@/utils/errorHandling'
 
 export async function GET(
   request: Request,
@@ -13,7 +14,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      throw new AppError('Unauthorized', 401)
     }
 
     const { id, step } = params
@@ -23,11 +24,11 @@ export async function GET(
     })
 
     if (!decision) {
-      return NextResponse.json({ error: 'Decision not found' }, { status: 404 })
+      throw new AppError('Decision not found', 404)
     }
 
     if (decision.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+      throw new AppError('Unauthorized', 403)
     }
 
     const steps = Array.isArray(decision.framework.steps) ? decision.framework.steps : 
@@ -35,7 +36,7 @@ export async function GET(
 
     const stepIndex = parseInt(step)
     if (!steps[stepIndex]) {
-      return NextResponse.json({ error: 'Step not found' }, { status: 404 })
+      throw new AppError('Step not found', 404)
     }
 
     const currentStep = steps[stepIndex]
@@ -55,7 +56,6 @@ export async function GET(
         ...allStepData
       };
       aiSuggestion = await getAiSuggestion(decision.frameworkId, stepIndex, context);
-      console.log(`New AI suggestion generated for step ${stepIndex}`);
       
       // Save the new AI suggestion
       allStepData[aiSuggestionKey] = aiSuggestion;
@@ -63,8 +63,6 @@ export async function GET(
         where: { id },
         data: { data: allStepData },
       });
-    } else {
-      console.log(`Using existing AI suggestion for step ${stepIndex}`);
     }
 
     return NextResponse.json({ 
@@ -75,7 +73,6 @@ export async function GET(
     })
 
   } catch (error) {
-    console.error('Error fetching step data:', error)
-    return NextResponse.json({ error: 'An error occurred while fetching the step data' }, { status: 500 })
+    return handleApiError(error)
   }
 }

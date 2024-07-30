@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { handleClientError } from '@/utils/errorHandling'
 
 export default function DecisionSummary() {
   const [summary, setSummary] = useState('')
@@ -24,8 +25,7 @@ export default function DecisionSummary() {
       setSummary(data.summary)
       setFrameworkName(data.frameworkName)
     } catch (error) {
-      console.error('Error fetching summary:', error)
-      setError('Failed to load decision summary. Please try again.')
+      setError(handleClientError(error))
     } finally {
       setIsLoading(false)
     }

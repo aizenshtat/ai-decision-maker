@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../../../../../auth/[...nextauth]/route'
 import { getAiSuggestion, generateDecisionSummary } from '@/services/aiSuggestionService'
+import { AppError, handleApiError } from '@/utils/errorHandling'
 
 export async function POST(
   request: Request,
@@ -13,11 +14,19 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions)
     if (!session || !session.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+      throw new AppError('Not authenticated', 401)
     }
 
     const { id, step } = params
+    if (!id || !step) {
+      throw new AppError('Missing required parameters', 400)
+    }
+
     const stepIndex = parseInt(step)
+    if (isNaN(stepIndex)) {
+      throw new AppError('Invalid step parameter', 400)
+    }
+
     const body = await request.json()
     const { stepData, aiSuggestion } = body
 
@@ -27,11 +36,11 @@ export async function POST(
     })
 
     if (!decision) {
-      return NextResponse.json({ error: 'Decision not found' }, { status: 404 })
+      throw new AppError('Decision not found', 404)
     }
 
     if (decision.userId !== session.user.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+      throw new AppError('Unauthorized', 403)
     }
 
     let frameworkSteps = [];
@@ -83,7 +92,6 @@ export async function POST(
 
     return NextResponse.json({ completed: false })
   } catch (error) {
-    console.error('Error submitting step:', error)
-    return NextResponse.json({ error: 'Error submitting step' }, { status: 500 })
+    return handleApiError(error)
   }
 }

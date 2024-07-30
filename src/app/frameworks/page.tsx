@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { handleClientError } from '@/utils/errorHandling'
 
 interface Framework {
   id: string;
@@ -28,8 +29,7 @@ export default function Frameworks() {
       const data = await response.json()
       setFrameworks(data)
     } catch (error) {
-      console.error('Error fetching frameworks:', error)
-      setError('Failed to load frameworks. Please try again.')
+      setError(handleClientError(error))
     } finally {
       setIsLoading(false)
     }
@@ -46,17 +46,15 @@ export default function Frameworks() {
         });
         
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to delete framework');
+          throw new Error('Failed to delete framework');
         }
         
         const result = await response.json();
-        console.log(result.message); // Log the success message
+        console.log(result.message);
         
         setFrameworks(frameworks.filter(framework => framework.id !== id));
       } catch (error) {
-        console.error('Error deleting framework:', error);
-        setError('Failed to delete framework. Please try again.');
+        setError(handleClientError(error));
       }
     }
   }
@@ -72,8 +70,7 @@ export default function Frameworks() {
       const newFramework = await response.json();
       setFrameworks([newFramework, ...frameworks]);
     } catch (error) {
-      console.error('Error cloning framework:', error);
-      setError('Failed to clone framework. Please try again.');
+      setError(handleClientError(error));
     }
   }
 

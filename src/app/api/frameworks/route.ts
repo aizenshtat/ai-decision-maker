@@ -2,15 +2,15 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../auth/[...nextauth]/route'
+import { AppError, handleApiError } from '@/utils/errorHandling'
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions)
-
-  if (!session || !session.user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      throw new AppError('Not authenticated', 401)
+    }
+
     const frameworks = await prisma.framework.findMany({
       where: {
         OR: [
@@ -24,19 +24,17 @@ export async function GET(request: Request) {
 
     return NextResponse.json(frameworks)
   } catch (error) {
-    console.error('Error fetching frameworks:', error)
-    return NextResponse.json({ error: 'An error occurred while fetching frameworks' }, { status: 500 })
+    return handleApiError(error)
   }
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions)
-
-  if (!session || !session.user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      throw new AppError('Not authenticated', 401)
+    }
+
     const { name, description, steps, cloneFrom } = await request.json()
 
     let frameworkData;
@@ -47,7 +45,7 @@ export async function POST(request: Request) {
       })
 
       if (!sourceFramework) {
-        return NextResponse.json({ error: 'Source framework not found' }, { status: 404 })
+        throw new AppError('Source framework not found', 404)
       }
 
       frameworkData = {
@@ -71,7 +69,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(framework)
   } catch (error) {
-    console.error('Error creating framework:', error)
-    return NextResponse.json({ error: 'An error occurred while creating the framework' }, { status: 500 })
+    return handleApiError(error)
   }
 }

@@ -1,23 +1,36 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { generateDecisionSummary } from '@/services/aiSuggestionService'
+import { AppError, handleApiError } from '@/utils/errorHandling'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from '../../../auth/[...nextauth]/route'
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      throw new AppError('Not authenticated', 401)
+    }
+
     const id = params.id;
     const decision = await prisma.decision.findUnique({
       where: { id },
       include: {
         user: true,
-        feedbacks: true
+        feedbacks: true,
+        framework: true
       },
     });
 
     if (!decision) {
-      return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
+      throw new AppError('Decision not found', 404)
+    }
+
+    if (decision.userId !== session.user.id) {
+      throw new AppError('Unauthorized', 403)
     }
 
     let summary = decision.summary;
@@ -34,9 +47,8 @@ export async function GET(
       });
     }
 
-    return NextResponse.json({ summary });
+    return NextResponse.json({ summary, frameworkName: decision.framework.name });
   } catch (error) {
-    console.error('Error fetching or generating decision summary:', error);
-    return NextResponse.json({ error: 'An error occurred while fetching or generating the decision summary' }, { status: 500 });
+    return handleApiError(error)
   }
 }
