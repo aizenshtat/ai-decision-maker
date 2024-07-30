@@ -15,11 +15,9 @@ import TextField from '@/components/TextField'
 import { Card, Button, Input, Label, ErrorMessage } from '@/components/ui'
 import Link from 'next/link'
 import { handleClientError } from '@/utils/errorHandling'
+import { Step, Field } from '@/types/framework'
 
-type StepData = {
-  title: string;
-  description: string;
-  fields: any[];
+type StepData = Step & {
   status?: 'completed';
   question?: string;
   [key: string]: any;
@@ -175,12 +173,12 @@ export default function DecisionStep() {
     }
   }
 
-  const renderField = (field: any) => {
+  const renderField = (field: Field) => {
     console.log('Rendering field:', field);
     switch (field.type) {
       case 'matrix':
-        const rowOptions = field.dependencies.rows ? getOptionsFromPreviousStep(`${field.dependencies.rows.step}.${field.dependencies.rows.field}.${field.dependencies.rows.use}`) : []
-        const columnOptions = field.dependencies.columns ? getOptionsFromPreviousStep(`${field.dependencies.columns.step}.${field.dependencies.columns.field}.${field.dependencies.columns.use}`) : []
+        const rowOptions = field.dependencies?.rows ? getOptionsFromPreviousStep(`${field.dependencies.rows.step}.${field.dependencies.rows.field}.${field.dependencies.rows.use}`) : []
+        const columnOptions = field.dependencies?.columns ? getOptionsFromPreviousStep(`${field.dependencies.columns.step}.${field.dependencies.columns.field}.${field.dependencies.columns.use}`) : []
         console.log('Matrix field options:', { rowOptions, columnOptions });
         return (
           <MatrixField

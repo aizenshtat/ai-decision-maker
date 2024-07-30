@@ -1,3 +1,5 @@
+// src/components/FrameworkDetails.tsx
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -66,13 +68,20 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
     }
   }
 
-  const handleFieldChange = (stepIndex: number, fieldIndex: number, field: keyof Field, value: string) => {
+  const handleFieldChange = (stepIndex: number, fieldIndex: number, field: keyof Field, value: any) => {
     if (framework) {
-      const newSteps = [...framework.steps]
-      const newFields = [...newSteps[stepIndex].fields]
-      newFields[fieldIndex] = { ...newFields[fieldIndex], [field]: value }
-      newSteps[stepIndex] = { ...newSteps[stepIndex], fields: newFields }
-      setFramework({ ...framework, steps: newSteps })
+      const newSteps = [...framework.steps];
+      const newFields = [...newSteps[stepIndex].fields];
+      if (field === 'dependencies') {
+        newFields[fieldIndex] = {
+          ...newFields[fieldIndex],
+          dependencies: value as Field['dependencies']
+        };
+      } else {
+        newFields[fieldIndex] = { ...newFields[fieldIndex], [field]: value };
+      }
+      newSteps[stepIndex] = { ...newSteps[stepIndex], fields: newFields };
+      setFramework({ ...framework, steps: newSteps });
     }
   }
 

@@ -63,10 +63,10 @@ export default function Dashboard() {
           {decisions.map((decision) => (
             <div key={decision.id} className="bg-white shadow-md rounded-lg p-6">
               <h2 className="text-xl font-semibold mb-2">{decision.question}</h2>
-              <p className="text-gray-600 mb-2">Framework: {decision.framework}</p>
+              <p className="text-gray-600 mb-2">Framework: {decision.framework.name}</p>
               <p className="text-gray-600 mb-2">Created: {new Date(decision.createdAt).toLocaleString()}</p>
               <p className="text-gray-600 mb-4">
-                Status: {decision.status === 'completed' ? 'Completed' : `In Progress (Step ${decision.currentStep + 1} of ${decision.totalSteps})`}
+                Status: {decision.status === 'completed' ? 'Completed' : `In Progress (Step ${decision.currentStep + 1})`}
               </p>
               <div className="flex space-x-4">
                 {decision.status === 'completed' ? (

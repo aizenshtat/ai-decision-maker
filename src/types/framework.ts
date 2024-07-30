@@ -1,8 +1,11 @@
 export interface Framework {
   id: string;
   name: string;
-  description?: string;
+  description: string | null;
   steps: Step[];
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Step {
@@ -15,18 +18,32 @@ export interface Step {
 export interface Field {
   name: string;
   label: string;
-  type: string | { type: string; dependency?: Dependency };
+  type: FieldType;
   description?: string;
   placeholder?: string;
   object_structure?: ObjectStructure;
   matrix_structure?: MatrixStructure;
   cell_format?: CellFormat;
   validation?: Validation;
-  dependencies?: Dependency | { [key: string]: Dependency };
+  dependencies?: {
+    [key: string]: Dependency;
+  } | Dependency;
 }
 
+export type FieldType = 'text' | 'textarea' | 'number' | 'select' | 'list' | 'list_of_objects' | 'matrix';
+
 export interface ObjectStructure {
-  [key: string]: string | { type: string; min?: number; max?: number; step?: number };
+  [key: string]: string | {
+    type: string;
+    min?: number;
+    max?: number;
+    step?: number;
+    dependency?: {
+      step: string;
+      field: string;
+      use: string;
+    };
+  };
 }
 
 export interface MatrixStructure {

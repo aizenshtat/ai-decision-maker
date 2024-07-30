@@ -9,10 +9,10 @@ import MatrixField from '@/components/MatrixField'
 import ListOfObjectsField from '@/components/ListOfObjectsField'
 import ListField from '@/components/ListField'
 import { Framework } from '@/types/framework'
+import { Decision } from '@/types/decision'
 
 export default function ViewDecision() {
   const [decision, setDecision] = useState<Decision | null>(null)
-  const [framework, setFramework] = useState<Framework | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const params = useParams()
@@ -26,9 +26,8 @@ export default function ViewDecision() {
     try {
       const response = await fetch(`/api/decisions/${id}`)
       if (!response.ok) throw new Error('Failed to fetch decision data')
-      const data = await response.json()
+      const data: Decision = await response.json()
       setDecision(data)
-      setFramework(data.framework)
     } catch (error) {
       console.error('Error fetching decision data:', error)
       setError('Failed to load decision data. Please try again.')
@@ -39,12 +38,12 @@ export default function ViewDecision() {
 
   if (isLoading) return <div className="text-center mt-10">Loading decision...</div>
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>
-  if (!decision || !framework) return <div className="text-center mt-10">No decision data available.</div>
+  if (!decision) return <div className="text-center mt-10">No decision data available.</div>
 
   const renderStepData = (stepTitle: string, stepData: Record<string, any>) => {
     return Object.entries(stepData).map(([key, value]) => {
       if (key.endsWith('_ai_suggestion')) return null;
-      const step = framework.steps.find((s: { title: string }) => s.title === stepTitle);
+      const step = decision.framework.steps.find((s: { title: string }) => s.title === stepTitle);
       const field = step?.fields.find(f => f.name === key);
       const label = field?.label || key;
       return (
@@ -66,12 +65,14 @@ export default function ViewDecision() {
                   />
                 );
               case 'list_of_objects':
+                const getOptionsFromPreviousStep = () => [];
                 return (
                   <ListOfObjectsField
                     field={field}
                     value={value}
                     onChange={() => {}}
                     isEditable={false}
+                    getOptionsFromPreviousStep={getOptionsFromPreviousStep}
                   />
                 );
               case 'list':
@@ -121,8 +122,8 @@ export default function ViewDecision() {
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
       <h1 className="text-3xl font-bold mb-6">{decision.question}</h1>
-      <p className="text-gray-600 mb-4">Framework: {framework.name}</p>
-      {framework.steps.map((step: { title: string }, index: number) => {
+      <p className="text-gray-600 mb-4">Framework: {decision.framework.name}</p>
+      {decision.framework.steps.map((step: { title: string }, index: number) => {
         const stepData = decision.data[step.title];
         if (!stepData) return null;
         return (

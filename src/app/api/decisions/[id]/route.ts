@@ -4,7 +4,10 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../../auth/[...nextauth]/route'
-import { AppError, handleApiError, createApiErrorResponse } from '@/utils/errorHandling'
+import { AppError, handleApiError } from '@/utils/errorHandling'
+import { Framework, Step } from '@/types/framework'
+import { Decision } from '@/types/decision'
+import { parseSteps } from '@/utils/frameworkUtils'
 
 export async function GET(
   request: Request,
@@ -34,20 +37,14 @@ export async function GET(
       throw new AppError('Forbidden', 403)
     }
 
-    let parsedSteps = [];
-    if (decision.framework && decision.framework.steps) {
-      try {
-        parsedSteps = typeof decision.framework.steps === 'string' 
-          ? JSON.parse(decision.framework.steps) 
-          : decision.framework.steps;
-      } catch (error) {
-        console.error('Error parsing framework steps:', error);
-      }
-    }
-
-    const formattedDecision = {
+    const formattedDecision: Decision = {
       ...decision,
-      steps: parsedSteps,
+      createdAt: decision.createdAt.toISOString(),
+      status: decision.status as 'in_progress' | 'completed',
+      framework: {
+        ...decision.framework,
+        steps: parseSteps(decision.framework.steps)
+      }
     }
 
     return NextResponse.json(formattedDecision)

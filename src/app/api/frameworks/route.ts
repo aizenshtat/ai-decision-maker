@@ -1,8 +1,12 @@
+// src/app/api/frameworks/route.ts
+
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../auth/[...nextauth]/route'
 import { AppError, handleApiError } from '@/utils/errorHandling'
+import { Framework, Step } from '@/types/framework'
+import { parseSteps } from '@/utils/frameworkUtils'
 
 export async function GET(request: Request) {
   try {
@@ -11,7 +15,7 @@ export async function GET(request: Request) {
       throw new AppError('Not authenticated', 401)
     }
 
-    const frameworks = await prisma.framework.findMany({
+    const rawFrameworks = await prisma.framework.findMany({
       where: {
         OR: [
           { userId: session.user.id },
@@ -21,6 +25,11 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
       distinct: ['name']
     })
+
+    const frameworks: Framework[] = rawFrameworks.map(framework => ({
+      ...framework,
+      steps: parseSteps(framework.steps)
+    }))
 
     return NextResponse.json(frameworks)
   } catch (error) {

@@ -1,10 +1,10 @@
-
 // src/app/frameworks/new/page.tsx
 
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Framework } from '@/types/framework'
 
 export default function NewFramework() {
   const [name, setName] = useState('')
@@ -24,14 +24,14 @@ export default function NewFramework() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, description, steps: [] }),
+        body: JSON.stringify({ name, description, steps: [] } as Partial<Framework>),
       })
 
       if (!response.ok) {
         throw new Error('Failed to create framework')
       }
 
-      const data = await response.json()
+      const data: Framework = await response.json()
       router.push(`/frameworks/${data.id}`)
     } catch (error) {
       console.error('Error creating framework:', error)

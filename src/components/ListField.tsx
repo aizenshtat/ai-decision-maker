@@ -38,6 +38,7 @@ const ListField: React.FC<ListFieldProps> = ({ field, value = [], onChange, isEd
           {isEditable ? (
             <>
               <Input
+                id={`${field.name}-${index}`}
                 type="text"
                 value={item}
                 onChange={(e) => handleItemChange(index, e.target.value)}

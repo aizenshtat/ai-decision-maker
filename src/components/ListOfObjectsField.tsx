@@ -3,19 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Button, Input, Label, ErrorMessage } from './ui'
 import SelectField from './SelectField'
+import { Field, ObjectStructure } from '@/types/framework'
 
 interface ListOfObjectsFieldProps {
-  field: {
-    name: string;
-    label: string;
-    object_structure: { [key: string]: string | { type: string; min?: number; max?: number; step?: number; dependency?: any } };
-    validation?: {
-      total_weight?: {
-        max: number;
-        message: string;
-      }
-    };
-  };
+  field: Field;
   value: { [key: string]: string | number }[] | undefined;
   onChange: (value: { [key: string]: string | number }[]) => void;
   isEditable?: boolean;
@@ -35,7 +26,7 @@ const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, o
   }, [value]);
 
   const handleAdd = () => {
-    const newObject = Object.keys(field.object_structure).reduce((acc, key) => {
+    const newObject = Object.keys(field.object_structure || {}).reduce((acc, key) => {
       acc[key] = '';
       return acc;
     }, {} as { [key: string]: string | number });
@@ -86,7 +77,7 @@ const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, o
     }
   };
 
-  const renderInputField = (item: { [key: string]: string | number }, index: number, key: string, fieldType: string | { type: string; min?: number; max?: number; step?: number; dependency?: any }) => {
+  const renderInputField = (item: { [key: string]: string | number }, index: number, key: string, fieldType: string | ObjectStructure[keyof ObjectStructure]) => {
     const inputProps = {
       id: `${field.name}-${index}-${key}`,
       value: item[key].toString(),
@@ -132,7 +123,7 @@ const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, o
       <Label>{field.label}</Label>
       {internalValue.map((item, index) => (
         <div key={index} className="bg-white shadow-sm rounded-lg p-4">
-          {Object.entries(field.object_structure).map(([key, type]) => (
+          {Object.entries(field.object_structure || {}).map(([key, type]) => (
             <div key={key} className="mb-4">
               <Label htmlFor={`${field.name}-${index}-${key}`} className="font-medium text-gray-700">{key}</Label>
               {isEditable ? (
