@@ -12,9 +12,8 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions)
-
-    if (!session || !session.user) {
-      throw new AppError('Not authenticated', 401)
+    if (!session?.user) {
+      throw new AppError('User not found', 404)
     }
 
     const { id } = params
@@ -29,7 +28,7 @@ export async function POST(
     }
 
     if (decision.userId !== session.user.id) {
-      throw new AppError('Unauthorized', 403)
+      throw new AppError('Forbidden', 403)
     }
 
     const feedback = await prisma.feedback.create({

@@ -10,8 +10,8 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
-      throw new AppError('Not authenticated', 401)
+    if (!session?.user) {
+      throw new AppError('User not found', 404)
     }
 
     const { id } = params
@@ -39,8 +39,8 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
-      throw new AppError('Not authenticated', 401)
+    if (!session?.user) {
+      throw new AppError('User not found', 404)
     }
 
     const { id } = params
@@ -79,8 +79,8 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
-      throw new AppError('Not authenticated', 401)
+    if (!session?.user) {
+      throw new AppError('User not found', 404)
     }
 
     const { id } = params

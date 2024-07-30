@@ -1,11 +1,11 @@
 -- Create system user if it doesn't exist
 INSERT INTO "User" (id, name, email, password)
-VALUES ('system', 'System User', 'system@example.com', 'not_a_real_password')
-ON CONFLICT (id) DO NOTHING;
+SELECT 'system', 'System User', 'system@example.com', '$2b$10$XXXXXXXXXXXXXXXXXXXXXXXX'
+WHERE NOT EXISTS (SELECT 1 FROM "User" WHERE id = 'system');
 
 -- Add default framework if it doesn't exist
 INSERT INTO "Framework" (id, name, description, steps, "userId", "createdAt", "updatedAt")
-VALUES (
+SELECT 
   'default',
   'Refined Personal Decision Framework',
   'A structured approach for making significant personal decisions that impact your life, career, relationships, or personal growth.',
@@ -13,5 +13,4 @@ VALUES (
   'system',
   CURRENT_TIMESTAMP,
   CURRENT_TIMESTAMP
-)
-ON CONFLICT (id) DO NOTHING;
+WHERE NOT EXISTS (SELECT 1 FROM "Framework" WHERE id = 'default');

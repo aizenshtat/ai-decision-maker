@@ -9,8 +9,8 @@ import { AppError, handleApiError, createApiErrorResponse } from '@/utils/errorH
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
-      throw new AppError('Not authenticated', 401)
+    if (!session?.user) {
+      throw new AppError('User not found', 404)
     }
 
     const { question, frameworkId } = await request.json()

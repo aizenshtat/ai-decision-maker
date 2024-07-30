@@ -13,8 +13,8 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
-      throw new AppError('Unauthorized', 401)
+    if (!session?.user) {
+      throw new AppError('User not found', 404)
     }
 
     const { id, step } = params

@@ -11,8 +11,8 @@ import { parseSteps } from '@/utils/frameworkUtils'
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
-      throw new AppError('Not authenticated', 401)
+    if (!session?.user) {
+      throw new AppError('User not found', 404)
     }
 
     const rawFrameworks = await prisma.framework.findMany({
@@ -40,8 +40,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
-      throw new AppError('Not authenticated', 401)
+    if (!session?.user) {
+      throw new AppError('User not found', 404)
     }
 
     const { name, description, steps, cloneFrom } = await request.json()
