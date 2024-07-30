@@ -4,24 +4,22 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../../../../auth/[...nextauth]/route'
-import { PERSONAL_DECISION_FRAMEWORK } from '@/lib/decisionFramework'
+import { getAiSuggestion } from '@/services/aiSuggestionService'
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string; step: string } }
 ) {
-  const session = await getServerSession(authOptions)
-
-  if (!session || !session.user) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-  }
-
-  const { id, step } = params
-  const stepIndex = parseInt(step)
-
   try {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id, step } = params
     const decision = await prisma.decision.findUnique({
-      where: { id: id }
+      where: { id },
+      include: { framework: true },
     })
 
     if (!decision) {
@@ -32,37 +30,52 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    if (decision.status === 'completed') {
-      return NextResponse.json({
-        status: 'completed',
-        question: decision.question,
-        summary: decision.summary
-      })
-    }
+    const steps = Array.isArray(decision.framework.steps) ? decision.framework.steps : 
+                  (typeof decision.framework.steps === 'string' ? JSON.parse(decision.framework.steps) : []);
 
-    const frameworkStep = PERSONAL_DECISION_FRAMEWORK.steps[stepIndex]
-    if (!frameworkStep) {
+    const stepIndex = parseInt(step)
+    if (!steps[stepIndex]) {
       return NextResponse.json({ error: 'Step not found' }, { status: 404 })
     }
 
-    const savedData = decision.data[frameworkStep.title] || {}
-    const aiSuggestion = decision.data[`${frameworkStep.title}_ai_suggestion`] || ""
+    const currentStep = steps[stepIndex]
+    
+    const allStepData: Record<string, any> = typeof decision.data === 'string' 
+      ? JSON.parse(decision.data || '{}')
+      : decision.data || {};
 
-    // Include all previous step data
-    const allStepData = {}
-    for (let i = 0; i <= stepIndex; i++) {
-      const currentStep = PERSONAL_DECISION_FRAMEWORK.steps[i]
-      allStepData[currentStep.title] = decision.data[currentStep.title] || {}
+    const savedData = allStepData[currentStep.title] || {}
+    const aiSuggestionKey = `${currentStep.title}_ai_suggestion`
+
+    let aiSuggestion = allStepData[aiSuggestionKey] || null;
+
+    if (!aiSuggestion) {
+      const context: Record<string, any> = {
+        initialQuestion: decision.question,
+        ...allStepData
+      };
+      aiSuggestion = await getAiSuggestion(decision.frameworkId, stepIndex, context);
+      console.log(`New AI suggestion generated for step ${stepIndex}`);
+      
+      // Save the new AI suggestion
+      allStepData[aiSuggestionKey] = aiSuggestion;
+      await prisma.decision.update({
+        where: { id },
+        data: { data: allStepData },
+      });
+    } else {
+      console.log(`Using existing AI suggestion for step ${stepIndex}`);
     }
 
-    return NextResponse.json({
-      step: frameworkStep,
-      saved_data: savedData,
-      ai_suggestion: aiSuggestion,
-      all_step_data: allStepData
+    return NextResponse.json({ 
+      currentStep, 
+      allStepData, 
+      savedData,
+      aiSuggestion
     })
+
   } catch (error) {
-    console.error('Error getting step:', error)
-    return NextResponse.json({ error: 'Error getting step' }, { status: 500 })
+    console.error('Error fetching step data:', error)
+    return NextResponse.json({ error: 'An error occurred while fetching the step data' }, { status: 500 })
   }
 }

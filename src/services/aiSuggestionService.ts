@@ -1,7 +1,7 @@
 // src/services/aiSuggestionService.ts
 
-import { PERSONAL_DECISION_FRAMEWORK } from '@/lib/decisionFramework';
 import { Anthropic } from '@anthropic-ai/sdk';
+import prisma from '@/lib/prisma'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -79,45 +79,56 @@ function generateFieldDescription(field: any): string {
   return description;
 }
 
-export async function getAiSuggestion(stepIndex: number, currentContext: any): Promise<any> {
-  const step = PERSONAL_DECISION_FRAMEWORK.steps[stepIndex];
-  const fieldsText = step.fields.map(generateFieldDescription).join("\n");
-  const fieldFormat = generateFieldFormat(step.fields);
-
-  const formattedContext = Object.entries(currentContext)
-    .map(([key, value]) => `${key}:\n${JSON.stringify(value, null, 2)}`)
-    .join("\n");
-
-  const prompt = PROMPT_TEMPLATE
-    .replace('{step_title}', step.title)
-    .replace('{step_description}', step.description)
-    .replace('{current_context}', formattedContext)
-    .replace('{fields}', fieldsText)
-    .replace('{field_format}', fieldFormat);
-
-  console.log('Generated AI prompt:', prompt);
-
+export async function getAiSuggestion(frameworkId: string, stepIndex: number, context: any) {
   try {
+    const framework = await prisma.framework.findUnique({
+      where: { id: frameworkId }
+    });
+
+    if (!framework) {
+      throw new Error('Framework not found');
+    }
+
+    const steps = Array.isArray(framework.steps) ? framework.steps : 
+                  (typeof framework.steps === 'string' ? JSON.parse(framework.steps) : []);
+    const step = steps[stepIndex];
+
+    if (!step) {
+      throw new Error('Step not found');
+    }
+
+    const fieldsText = step.fields.map(generateFieldDescription).join("\n");
+    const fieldFormat = generateFieldFormat(step.fields);
+
+    const formattedContext = `Initial Question: ${context.initialQuestion}\n\n` +
+      Object.entries(context)
+        .filter(([key]) => key !== 'initialQuestion')
+        .map(([key, value]) => `${key}:\n${JSON.stringify(value, null, 2)}`)
+        .join("\n");
+
+    const prompt = PROMPT_TEMPLATE
+      .replace('{step_title}', step.title)
+      .replace('{step_description}', step.description)
+      .replace('{current_context}', formattedContext)
+      .replace('{fields}', fieldsText)
+      .replace('{field_format}', fieldFormat);
+
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       max_tokens: 4096,
       messages: [{ role: "user", content: prompt}]
     });
 
-    const aiResponse = response.content[0].text;
-    console.log('AI response:', aiResponse);
+    const aiResponse = response.content[0].type === 'text' ? response.content[0].text : '';
 
     if (!aiResponse) {
       throw new Error('Empty response from AI');
     }
 
-    // Attempt to parse the JSON response
     try {
-      const parsedResponse = JSON.parse(aiResponse);
-      return parsedResponse;
+      return JSON.parse(aiResponse);
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
-      // If parsing fails, return a structured error response
       return {
         suggestion: "Sorry, I couldn't generate a proper suggestion at this time.",
         pre_filled_data: {}
@@ -125,7 +136,6 @@ export async function getAiSuggestion(stepIndex: number, currentContext: any): P
     }
   } catch (error) {
     console.error('Error getting AI suggestion:', error);
-    // Return a structured error response
     return {
       suggestion: "An error occurred while generating the AI suggestion.",
       pre_filled_data: {}
@@ -133,12 +143,12 @@ export async function getAiSuggestion(stepIndex: number, currentContext: any): P
   }
 }
 
-export async function generateDecisionSummary(question: string, steps: any[]): Promise<string> {
+export async function generateDecisionSummary(question: string, data: any[]): Promise<string> {
   const prompt = `Summarize the following decision-making process in markdown format:
 Question: ${question}
 
 Steps:
-${JSON.stringify(steps, null, 2)}
+${JSON.stringify(data, null, 2)}
 
 Please provide a comprehensive summary that includes:
 1. The main question or problem
@@ -156,6 +166,6 @@ Format the summary using markdown syntax, including headers, lists, and emphasis
     messages: [{ role: "user", content: prompt}]
   });
 
-  const summary = response.content[0]?.text || "Unable to generate summary.";
+  const summary = response.content[0].type === 'text' ? response.content[0].text : "Unable to generate summary.";
   return summary;
 }

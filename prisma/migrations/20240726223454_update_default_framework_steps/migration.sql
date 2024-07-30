@@ -1,9 +1,6 @@
-// src/lib/decisionFramework.ts
-
-export const PERSONAL_DECISION_FRAMEWORK = {
-    "name": "Refined Personal Decision Framework",
-    "description": "A structured approach for making significant personal decisions that impact your life, career, relationships, or personal growth.",
-    "steps": [
+-- Update the steps field for the default framework
+UPDATE "Framework"
+SET steps = '[
         {
             "title": "Define the Decision",
             "description": "Clearly state the decision you need to make and its context.",
@@ -20,7 +17,7 @@ export const PERSONAL_DECISION_FRAMEWORK = {
                     "type": "textarea",
                     "label": "Context",
                     "description": "Additional relevant context for the decision",
-                    "placeholder": "Describe your current situation and why you're considering this decision."
+                    "placeholder": "Describe your current situation and why you''re considering this decision."
                 },
                 {
                     "name": "desired_outcome",
@@ -30,7 +27,7 @@ export const PERSONAL_DECISION_FRAMEWORK = {
                     "placeholder": "e.g., Find a more fulfilling career with better long-term prospects"
                 }
             ],
-            "ai_instructions": "Provide suggestions for framing the decision and considering its context. Encourage the user to be specific about what they're deciding, consider the timeframe, and identify any constraints or limitations."
+            "ai_instructions": "Provide suggestions for framing the decision and considering its context. Encourage the user to be specific about what they''re deciding, consider the timeframe, and identify any constraints or limitations."
         },
         {
             "title": "Gather Information",
@@ -58,7 +55,7 @@ export const PERSONAL_DECISION_FRAMEWORK = {
                     "placeholder": "e.g., What skills are in highest demand? What is the job satisfaction rate?"
                 }
             ],
-            "ai_instructions": "Suggest reliable sources for research, encourage consulting experts or mentors, and help identify gaps in the user's knowledge. Provide guidance on how to approach the information-gathering process effectively."
+            "ai_instructions": "Suggest reliable sources for research, encourage consulting experts or mentors, and help identify gaps in the user''s knowledge. Provide guidance on how to approach the information-gathering process effectively."
         },
         {
             "title": "Identify Options",
@@ -106,7 +103,7 @@ export const PERSONAL_DECISION_FRAMEWORK = {
                     "placeholder": "e.g., Criterion: Potential income, Description: Expected salary and benefits, Weight: 8"
                 }
             ],
-            "ai_instructions": "Help the user consider both rational and emotional factors. Suggest prioritizing criteria based on personal values and goals. Encourage being specific about what each criterion means and why it's important."
+            "ai_instructions": "Help the user consider both rational and emotional factors. Suggest prioritizing criteria based on personal values and goals. Encourage being specific about what each criterion means and why it''s important."
         },
         {
             "title": "Evaluate Options",
@@ -189,7 +186,7 @@ export const PERSONAL_DECISION_FRAMEWORK = {
                     "name": "chosen_option",
                     "type": "select",
                     "label": "Chosen Option",
-                    "description": "The option you've decided to pursue",
+                    "description": "The option you''ve decided to pursue",
                     "dependencies": {
                         "step": "Identify Options", "field": "options", "use": "name" 
                     }
@@ -262,5 +259,5 @@ export const PERSONAL_DECISION_FRAMEWORK = {
             ],
             "ai_instructions": "Suggest scheduling regular check-ins to assess progress. Encourage being open to adjusting the plan if needed. Prompt the user to document what worked well and what could be improved in their decision-making process."
         }
-    ]
-}
+    ]'::jsonb
+WHERE id = 'default';

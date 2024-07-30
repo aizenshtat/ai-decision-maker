@@ -26,20 +26,31 @@ export async function GET(
 
   try {
     const decision = await prisma.decision.findUnique({
-      where: { id: id }
+      where: { id: id },
+      include: { framework: true }
     })
 
+    console.log(`Decision fetched: ${decision?.question.substring(0, 50)}...`);
+
     if (!decision) {
+      console.log('Decision not found')
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 })
     }
 
     if (decision.userId !== session.user.id) {
+      console.log('Unauthorized access attempt')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    if (!decision.framework) {
+      console.log('No framework associated with this decision')
+      return NextResponse.json({ error: 'No framework associated with this decision' }, { status: 400 })
     }
 
     // Prepare context for AI suggestion
     const context: Record<string, any> = {
-      initialQuestion: decision.question
+      initialQuestion: decision.question,
+      framework: decision.framework
     }
 
     // Safely spread decision.data if it's an object
@@ -47,16 +58,18 @@ export async function GET(
       Object.assign(context, decision.data as Record<string, any>)
     }
 
+    console.log(`Context prepared for AI suggestion (keys): ${Object.keys(context).join(', ')}`);
+
     // Get AI suggestion
-    const aiSuggestion = await getAiSuggestion(parseInt(step), context)
+    console.log(`Requesting AI suggestion for step ${step}`);
+    const aiSuggestion = await getAiSuggestion(decision.framework.id, parseInt(step), context)
+
+    console.log(`AI suggestion received for step ${step} (length: ${JSON.stringify(aiSuggestion).length})`);
 
     // Always return a 200 status, even if there was an error in generating the suggestion
     return NextResponse.json(aiSuggestion)
   } catch (error) {
     console.error('Error in suggestion route:', error)
-    return NextResponse.json({ 
-      suggestion: "An unexpected error occurred while processing your request.",
-      pre_filled_data: {}
-    }, { status: 200 })
+    return NextResponse.json({ error: 'An error occurred while getting the AI suggestion' }, { status: 500 })
   }
 }
