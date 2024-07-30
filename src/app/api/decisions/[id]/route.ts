@@ -24,7 +24,16 @@ export async function GET(
       where: { id },
       include: {
         user: true,
-        feedbacks: true,
+        feedbacks: {
+          select: {
+            rating: true,
+            comment: true,
+          },
+          take: 1,
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
         framework: true
       },
     })
@@ -41,6 +50,12 @@ export async function GET(
       ...decision,
       createdAt: decision.createdAt.toISOString(),
       status: decision.status as 'in_progress' | 'completed',
+      feedback: decision.feedbacks[0] 
+        ? {
+            rating: decision.feedbacks[0].rating,
+            comment: decision.feedbacks[0].comment || undefined
+          }
+        : null,
       framework: {
         ...decision.framework,
         steps: parseSteps(decision.framework.steps)

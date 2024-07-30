@@ -13,4 +13,8 @@ export interface Decision {
   status: 'in_progress' | 'completed';
   data: any; // You might want to define a more specific type for this
   summary?: string | null;
+  feedback?: {
+    rating: number;
+    comment?: string;
+  } | null;
 }

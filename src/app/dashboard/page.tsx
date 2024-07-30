@@ -7,12 +7,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Decision } from '@/types/decision'
 import { handleClientError } from '@/utils/errorHandling'
+import FeedbackForm from '@/components/FeedbackForm'
 
 export default function Dashboard() {
   const [decisions, setDecisions] = useState<Decision[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const router = useRouter()
+  const [showFeedbackForm, setShowFeedbackForm] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDecisions()
@@ -47,6 +49,22 @@ export default function Dashboard() {
     }
   }
 
+  const handleFeedbackSubmit = async (decisionId: string, rating: number, comment: string) => {
+    try {
+      const response = await fetch(`/api/decisions/${decisionId}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, comment }),
+      });
+
+      if (!response.ok) throw new Error('Failed to submit feedback');
+      setShowFeedbackForm(null);
+      fetchDecisions(); // Refresh the decisions list to show updated feedback
+    } catch (error) {
+      setError(handleClientError(error));
+    }
+  }
+
   if (isLoading) return <div className="text-center mt-10">Loading decisions...</div>
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>
 
@@ -61,13 +79,29 @@ export default function Dashboard() {
       ) : (
         <div className="grid gap-6 mt-6">
           {decisions.map((decision) => (
-            <div key={decision.id} className="bg-white shadow-md rounded-lg p-6">
+            <div key={decision.id} className="bg-white shadow-md rounded-lg p-6 mb-4">
               <h2 className="text-xl font-semibold mb-2">{decision.question}</h2>
               <p className="text-gray-600 mb-2">Framework: {decision.framework.name}</p>
               <p className="text-gray-600 mb-2">Created: {new Date(decision.createdAt).toLocaleString()}</p>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 mb-2">
                 Status: {decision.status === 'completed' ? 'Completed' : `In Progress (Step ${decision.currentStep + 1})`}
               </p>
+              {decision.feedback ? (
+                <p className="text-gray-600 mb-2">Rating: {'★'.repeat(decision.feedback.rating)}</p>
+              ) : decision.status === 'completed' && (
+                <button
+                  onClick={() => setShowFeedbackForm(decision.id)}
+                  className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 mr-2"
+                >
+                  Provide Feedback
+                </button>
+              )}
+              {showFeedbackForm === decision.id && (
+                <FeedbackForm
+                  decisionId={decision.id}
+                  onSubmit={(rating, comment) => handleFeedbackSubmit(decision.id, rating, comment)}
+                />
+              )}
               <div className="flex space-x-4">
                 {decision.status === 'completed' ? (
                   <button

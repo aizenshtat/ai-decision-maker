@@ -8,6 +8,7 @@ import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { handleClientError } from '@/utils/errorHandling'
+import FeedbackForm from '@/components/FeedbackForm'
 
 export default function DecisionSummary() {
   const [summary, setSummary] = useState('')
@@ -15,7 +16,12 @@ export default function DecisionSummary() {
   const [error, setError] = useState('')
   const [frameworkName, setFrameworkName] = useState('')
   const params = useParams()
-  const { id } = params
+  const { id } = params as { id: string }
+
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [existingFeedback, setExistingFeedback] = useState<{ rating: number; comment?: string } | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -24,6 +30,13 @@ export default function DecisionSummary() {
       const data = await response.json()
       setSummary(data.summary)
       setFrameworkName(data.frameworkName)
+      if (data.feedback) {
+        setExistingFeedback(data.feedback)
+        setFeedbackSubmitted(true)
+      } else {
+        setExistingFeedback(null)
+        setFeedbackSubmitted(false)
+      }
     } catch (error) {
       setError(handleClientError(error))
     } finally {
@@ -34,6 +47,24 @@ export default function DecisionSummary() {
   useEffect(() => {
     fetchSummary()
   }, [fetchSummary])
+
+  const handleFeedbackSubmit = async (rating: number, comment: string) => {
+    try {
+      const response = await fetch(`/api/decisions/${id}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, comment }),
+      });
+
+      if (!response.ok) throw new Error('Failed to submit feedback');
+      setFeedbackSubmitted(true);
+      setExistingFeedback({ rating, comment });
+      setSuccessMessage('Thank you for your feedback!');
+      setShowFeedbackForm(false);
+    } catch (error) {
+      setError(handleClientError(error));
+    }
+  };
 
   if (isLoading) return <div className="text-center mt-10">Loading summary...</div>
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>
@@ -58,6 +89,35 @@ export default function DecisionSummary() {
         </ReactMarkdown>
       </div>
       <p className="text-gray-600 mb-4">Framework: {frameworkName}</p>
+      
+      {successMessage && (
+        <div className="mt-4 p-2 bg-green-100 text-green-700 rounded">
+          {successMessage}
+        </div>
+      )}
+      
+      {existingFeedback ? (
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+          <h2 className="text-xl font-semibold mb-2">Your Feedback</h2>
+          <p>Rating: {'★'.repeat(existingFeedback.rating)}</p>
+          {existingFeedback.comment && <p>Comment: {existingFeedback.comment}</p>}
+        </div>
+      ) : !feedbackSubmitted && !showFeedbackForm && (
+        <button
+          onClick={() => setShowFeedbackForm(true)}
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+        >
+          Provide Feedback
+        </button>
+      )}
+      
+      {showFeedbackForm && (
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">Your Feedback</h2>
+          <FeedbackForm decisionId={id} onSubmit={handleFeedbackSubmit} />
+        </div>
+      )}
+      
       <div className="mt-6 flex justify-between">
         <Link href="/dashboard" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
           Back to Dashboard

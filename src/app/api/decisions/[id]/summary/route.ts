@@ -11,19 +11,27 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
-      throw new AppError('Not authenticated', 401)
+    if (!session?.user) {
+      throw new AppError('User not found', 404)
     }
 
-    const id = params.id;
+    const { id } = params
     const decision = await prisma.decision.findUnique({
       where: { id },
       include: {
-        user: true,
-        feedbacks: true,
-        framework: true
+        framework: true,
+        feedbacks: {
+          select: {
+            rating: true,
+            comment: true,
+          },
+          take: 1,
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
       },
-    });
+    })
 
     if (!decision) {
       throw new AppError('Decision not found', 404)
@@ -33,21 +41,11 @@ export async function GET(
       throw new AppError('Unauthorized', 403)
     }
 
-    let summary = decision.summary;
-
-    if (!summary) {
-      // Generate summary if it doesn't exist
-      const data = decision.data ? JSON.parse(decision.data as string) : [];
-      summary = await generateDecisionSummary(decision.question, data);
-      
-      // Save the generated summary
-      await prisma.decision.update({
-        where: { id },
-        data: { summary },
-      });
-    }
-
-    return NextResponse.json({ summary, frameworkName: decision.framework.name });
+    return NextResponse.json({
+      summary: decision.summary,
+      frameworkName: decision.framework.name,
+      feedback: decision.feedbacks[0] || null,
+    })
   } catch (error) {
     return handleApiError(error)
   }

@@ -17,10 +17,22 @@ export async function GET(request: Request) {
 
     const decisions = await prisma.decision.findMany({
       where: { userId: session.user.id },
-      include: { framework: true },
+      include: {
+        framework: true,
+        feedbacks: {
+          select: {
+            rating: true,
+            comment: true,
+          },
+          take: 1, // Assuming we only want the latest feedback
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
     })
 
-    const formattedDecisions: Decision[] = decisions.map(decision => ({
+    const formattedDecisions = decisions.map(decision => ({
       ...decision,
       createdAt: decision.createdAt.toISOString(),
       status: decision.status as 'in_progress' | 'completed',
@@ -28,7 +40,9 @@ export async function GET(request: Request) {
       framework: {
         ...decision.framework,
         steps: parseSteps(decision.framework.steps)
-      }
+      },
+      feedback: decision.feedbacks[0] || null,
+      feedbacks: undefined,
     }))
 
     return NextResponse.json(formattedDecisions)
