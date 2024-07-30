@@ -71,6 +71,7 @@ export async function POST(
         status: stepIndex + 1 >= frameworkSteps.length ? 'completed' : 'in_progress'
       }
     })
+
     if (updatedDecision.status === 'completed') {
       const summary = await generateDecisionSummary(updatedDecision.question, Object.values(updatedData))
       await prisma.decision.update({

@@ -81,12 +81,9 @@ function generateFieldDescription(field: any): string {
 
 export async function getAiSuggestion(frameworkId: string, stepIndex: number, context: any) {
   try {
-    console.log(`Getting AI suggestion for framework ${frameworkId}, step ${stepIndex}`);
     const framework = await prisma.framework.findUnique({
       where: { id: frameworkId }
     });
-
-    console.log('Framework fetched:', JSON.stringify(framework, null, 2));
 
     if (!framework) {
       throw new Error('Framework not found');
@@ -95,7 +92,6 @@ export async function getAiSuggestion(frameworkId: string, stepIndex: number, co
     const steps = Array.isArray(framework.steps) ? framework.steps : 
                   (typeof framework.steps === 'string' ? JSON.parse(framework.steps) : []);
     const step = steps[stepIndex];
-    console.log('Current step:', JSON.stringify(step, null, 2));
 
     if (!step) {
       throw new Error('Step not found');
@@ -117,8 +113,6 @@ export async function getAiSuggestion(frameworkId: string, stepIndex: number, co
       .replace('{fields}', fieldsText)
       .replace('{field_format}', fieldFormat);
 
-    console.log('Generated AI prompt:', prompt);
-
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       max_tokens: 4096,
@@ -126,18 +120,15 @@ export async function getAiSuggestion(frameworkId: string, stepIndex: number, co
     });
 
     const aiResponse = response.content[0].type === 'text' ? response.content[0].text : '';
-    console.log('AI response:', aiResponse);
 
     if (!aiResponse) {
       throw new Error('Empty response from AI');
     }
 
     try {
-      const parsedResponse = JSON.parse(aiResponse);
-      return parsedResponse;
+      return JSON.parse(aiResponse);
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
-      console.log('Raw AI response:', aiResponse);
       return {
         suggestion: "Sorry, I couldn't generate a proper suggestion at this time.",
         pre_filled_data: {}

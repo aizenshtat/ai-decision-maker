@@ -56,6 +56,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Framework not found' }, { status: 404 })
     }
 
+    if (framework.id === 'default') {
+      return NextResponse.json({ error: 'Cannot edit default framework' }, { status: 403 })
+    }
+
     if (framework.userId !== session.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
@@ -69,5 +73,41 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating framework:', error)
     return NextResponse.json({ error: 'An error occurred while updating the framework' }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const session = await getServerSession(authOptions)
+
+  if (!session || !session.user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  }
+
+  try {
+    const { id } = params
+
+    const framework = await prisma.framework.findUnique({
+      where: { id }
+    })
+
+    if (!framework) {
+      return NextResponse.json({ error: 'Framework not found' }, { status: 404 })
+    }
+
+    if (framework.userId !== session.user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    await prisma.framework.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({ message: 'Framework deleted successfully' })
+  } catch (error) {
+    console.error('Error deleting framework:', error)
+    return NextResponse.json({ error: 'An error occurred while deleting the framework' }, { status: 500 })
   }
 }

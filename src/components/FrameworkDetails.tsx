@@ -219,7 +219,7 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
             <Button onClick={handleCancel} className="bg-white text-black border border-gray-300 hover:bg-gray-100">Cancel</Button>
           </>
         ) : (
-          <Button onClick={handleEdit}>Edit</Button>
+          framework.id !== 'default' && <Button onClick={handleEdit}>Edit</Button>
         )}
       </div>
     </Card>
@@ -231,11 +231,31 @@ const FieldDetails: React.FC<{ field: Field; isEditing: boolean; onChange: (upda
     onChange({ ...field, [key]: value });
   };
 
+  const RemoveButton: React.FC<{ onClick: () => void }> = ({ onClick }) => (
+    <button
+      onClick={onClick}
+      className="text-red-500 hover:text-red-700 font-medium text-sm"
+      type="button"
+    >
+      Remove
+    </button>
+  );
+
   const renderObjectStructure = (structure: ObjectStructure) => (
-    <div className="ml-4 space-y-2">
+    <div className="ml-4 space-y-4">
       {Object.entries(structure).map(([key, value]) => (
-        <div key={key} className="border-l-2 pl-2 mb-2">
-          <div className="flex space-x-2">
+        <div key={key} className="bg-gray-50 p-4 rounded-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h5 className="font-semibold text-lg">Field: {key}</h5>
+            {isEditing && (
+              <RemoveButton onClick={() => {
+                const newStructure = { ...structure };
+                delete newStructure[key];
+                updateField('object_structure', newStructure);
+              }} />
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               id={`field-${field.name}-object-structure-${key}-name`}
               label="Field Name"
@@ -249,232 +269,335 @@ const FieldDetails: React.FC<{ field: Field; isEditing: boolean; onChange: (upda
               disabled={!isEditing}
             />
             {typeof value === 'string' ? (
-              <Input
+              <Select
                 id={`field-${field.name}-object-structure-${key}-type`}
                 label="Field Type"
                 value={value}
                 onChange={(e) => updateField('object_structure', { ...structure, [key]: e.target.value })}
                 disabled={!isEditing}
+                options={['text', 'textarea', 'number']}
               />
             ) : (
-              <div className="space-y-1">
-                {Object.entries(value).map(([attrKey, attrValue]) => (
-                  <Input
-                    key={attrKey}
-                    id={`field-${field.name}-object-structure-${key}-${attrKey}`}
-                    label={attrKey}
-                    value={attrValue as string}
-                    onChange={(e) => updateField('object_structure', { 
-                      ...structure, 
-                      [key]: { ...value, [attrKey]: e.target.value } 
-                    })}
-                    disabled={!isEditing}
-                  />
-                ))}
+              <div className="space-y-2">
+                <Input
+                  id={`field-${field.name}-object-structure-${key}-min`}
+                  label="Min"
+                  type="number"
+                  value={value.min?.toString() || ''}
+                  onChange={(e) => updateField('object_structure', { 
+                    ...structure, 
+                    [key]: { ...value, min: Number(e.target.value) } 
+                  })}
+                  disabled={!isEditing}
+                />
+                <Input
+                  id={`field-${field.name}-object-structure-${key}-max`}
+                  label="Max"
+                  type="number"
+                  value={value.max?.toString() || ''}
+                  onChange={(e) => updateField('object_structure', { 
+                    ...structure, 
+                    [key]: { ...value, max: Number(e.target.value) } 
+                  })}
+                  disabled={!isEditing}
+                />
+                <Input
+                  id={`field-${field.name}-object-structure-${key}-step`}
+                  label="Step"
+                  type="number"
+                  value={value.step?.toString() || ''}
+                  onChange={(e) => updateField('object_structure', { 
+                    ...structure, 
+                    [key]: { ...value, step: Number(e.target.value) } 
+                  })}
+                  disabled={!isEditing}
+                />
               </div>
             )}
           </div>
         </div>
       ))}
+      {isEditing && (
+        <Button
+          onClick={() => {
+            const newKey = `newField${Object.keys(structure).length + 1}`;
+            updateField('object_structure', { ...structure, [newKey]: 'text' });
+          }}
+          className="bg-green-500 hover:bg-green-600 text-white"
+        >
+          Add Field
+        </Button>
+      )}
     </div>
   );
 
+  const renderValidation = (validation: Validation) => (
+    <div className="ml-4 space-y-4">
+      {Object.entries(validation).map(([key, value]) => (
+        <div key={key} className="bg-gray-50 p-4 rounded-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h5 className="font-semibold text-lg">Validation: {key}</h5>
+            {isEditing && (
+              <RemoveButton onClick={() => {
+                const newValidation = { ...validation };
+                delete newValidation[key];
+                updateField('validation', newValidation);
+              }} />
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              id={`field-${field.name}-validation-${key}-max`}
+              label="Max"
+              value={value.max.toString()}
+              onChange={(e) => updateField('validation', { 
+                ...validation, 
+                [key]: { ...value, max: parseInt(e.target.value) } 
+              })}
+              disabled={!isEditing}
+              type="number"
+            />
+            <Input
+              id={`field-${field.name}-validation-${key}-message`}
+              label="Message"
+              value={value.message}
+              onChange={(e) => updateField('validation', { 
+                ...validation, 
+                [key]: { ...value, message: e.target.value } 
+              })}
+              disabled={!isEditing}
+            />
+          </div>
+        </div>
+      ))}
+      {isEditing && (
+        <Button
+          onClick={() => {
+            const newKey = `newValidation${Object.keys(validation).length + 1}`;
+            updateField('validation', { ...validation, [newKey]: { max: 100, message: '' } });
+          }}
+          className="bg-green-500 hover:bg-green-600 text-white"
+        >
+          Add Validation
+        </Button>
+      )}
+    </div>
+  );
+
+  const renderDependencies = (dependencies: Dependency | { [key: string]: Dependency }) => {
+    const isMultipleDependencies = typeof dependencies === 'object' && !('step' in dependencies);
+
+    return (
+      <div className="space-y-4">
+        {isMultipleDependencies ? (
+          Object.entries(dependencies).map(([key, value]) => (
+            <div key={key} className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <h5 className="font-semibold text-lg">Dependency: {key}</h5>
+                {isEditing && (
+                  <RemoveButton onClick={() => {
+                    const newDependencies = { ...dependencies };
+                    delete newDependencies[key];
+                    updateField('dependencies', newDependencies);
+                  }} />
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                <Input
+                  id={`field-${field.name}-dependencies-${key}-name`}
+                  label="Dependency Name"
+                  value={key}
+                  onChange={(e) => {
+                    const newDependencies = { ...dependencies };
+                    const dependencyValue = newDependencies[key];
+                    delete newDependencies[key];
+                    newDependencies[e.target.value] = dependencyValue;
+                    updateField('dependencies', newDependencies);
+                  }}
+                  disabled={!isEditing}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input
+                  id={`field-${field.name}-dependencies-${key}-step`}
+                  label="Step"
+                  value={value.step}
+                  onChange={(e) => updateField('dependencies', { 
+                    ...dependencies, 
+                    [key]: { ...value, step: e.target.value } 
+                  })}
+                  disabled={!isEditing}
+                />
+                <Input
+                  id={`field-${field.name}-dependencies-${key}-field`}
+                  label="Field"
+                  value={value.field}
+                  onChange={(e) => updateField('dependencies', { 
+                    ...dependencies, 
+                    [key]: { ...value, field: e.target.value } 
+                  })}
+                  disabled={!isEditing}
+                />
+                <Input
+                  id={`field-${field.name}-dependencies-${key}-use`}
+                  label="Use"
+                  value={value.use}
+                  onChange={(e) => updateField('dependencies', { 
+                    ...dependencies, 
+                    [key]: { ...value, use: e.target.value } 
+                  })}
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h5 className="font-semibold text-lg mb-2">Dependency</h5>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input
+                id={`field-${field.name}-dependencies-step`}
+                label="Step"
+                value={(dependencies as Dependency).step}
+                onChange={(e) => updateField('dependencies', { ...(dependencies as Dependency), step: e.target.value })}
+                disabled={!isEditing}
+              />
+              <Input
+                id={`field-${field.name}-dependencies-field`}
+                label="Field"
+                value={(dependencies as Dependency).field}
+                onChange={(e) => updateField('dependencies', { ...(dependencies as Dependency), field: e.target.value })}
+                disabled={!isEditing}
+              />
+              <Input
+                id={`field-${field.name}-dependencies-use`}
+                label="Use"
+                value={(dependencies as Dependency).use}
+                onChange={(e) => updateField('dependencies', { ...(dependencies as Dependency), use: e.target.value })}
+                disabled={!isEditing}
+              />
+            </div>
+          </div>
+        )}
+        {isEditing && isMultipleDependencies && (
+          <Button 
+            onClick={() => {
+              const newKey = `newDependency${Object.keys(dependencies).length + 1}`;
+              updateField('dependencies', { ...dependencies, [newKey]: { step: '', field: '', use: '' } });
+            }} 
+            className="bg-green-500 hover:bg-green-600 text-white mt-4"
+          >
+            Add Dependency
+          </Button>
+        )}
+      </div>
+    );
+  };
+
   const renderMatrixStructure = (structure: MatrixStructure) => (
     <div className="ml-4 space-y-2">
-      <Input
-        id={`field-${field.name}-matrix-structure-rows`}
-        label="Rows"
-        value={structure.rows}
-        onChange={(e) => updateField('matrix_structure', { ...structure, rows: e.target.value })}
-        disabled={!isEditing}
-      />
-      <Input
-        id={`field-${field.name}-matrix-structure-columns`}
-        label="Columns"
-        value={structure.columns}
-        onChange={(e) => updateField('matrix_structure', { ...structure, columns: e.target.value })}
-        disabled={!isEditing}
-      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input
+          id={`field-${field.name}-matrix-rows`}
+          label="Rows"
+          value={structure.rows}
+          onChange={(e) => updateField('matrix_structure', { ...structure, rows: e.target.value })}
+          disabled={!isEditing}
+        />
+        <Input
+          id={`field-${field.name}-matrix-columns`}
+          label="Columns"
+          value={structure.columns}
+          onChange={(e) => updateField('matrix_structure', { ...structure, columns: e.target.value })}
+          disabled={!isEditing}
+        />
+      </div>
     </div>
   );
 
   const renderCellFormat = (format: CellFormat) => (
     <div className="ml-4 space-y-2">
-      {Object.entries(format).map(([key, value]) => (
-        <Input
-          key={key}
-          id={`field-${field.name}-cell-format-${key}`}
-          label={key}
-          value={value as string}
-          onChange={(e) => updateField('cell_format', { ...format, [key]: e.target.value })}
-          disabled={!isEditing}
-        />
-      ))}
-    </div>
-  );
-
-  const renderValidation = (validation: Validation) => (
-    <div className="ml-4 space-y-2">
-      {Object.entries(validation).map(([key, value]) => (
-        <div key={key} className="border-l-2 pl-2 mb-2">
+      <Select
+        id={`field-${field.name}-cell-format-type`}
+        label="Cell Type"
+        value={format.type}
+        onChange={(e) => updateField('cell_format', { ...format, type: e.target.value })}
+        disabled={!isEditing}
+        options={['number', 'text', 'select']}
+      />
+      {format.type === 'number' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
-            id={`field-${field.name}-validation-${key}-name`}
-            label="Validation Name"
-            value={key}
-            onChange={(e) => {
-              const newValidation = { ...validation };
-              delete newValidation[key];
-              newValidation[e.target.value] = value;
-              updateField('validation', newValidation);
-            }}
-            disabled={!isEditing}
-          />
-          <Input
-            id={`field-${field.name}-validation-${key}-max`}
-            label="Max"
-            value={value.max.toString()}
-            onChange={(e) => updateField('validation', { 
-              ...validation, 
-              [key]: { ...value, max: parseInt(e.target.value) } 
-            })}
-            disabled={!isEditing}
+            id={`field-${field.name}-cell-format-min`}
+            label="Min"
             type="number"
+            value={format.min?.toString() || ''}
+            onChange={(e) => updateField('cell_format', { ...format, min: Number(e.target.value) })}
+            disabled={!isEditing}
           />
           <Input
-            id={`field-${field.name}-validation-${key}-message`}
-            label="Message"
-            value={value.message}
-            onChange={(e) => updateField('validation', { 
-              ...validation, 
-              [key]: { ...value, message: e.target.value } 
-            })}
+            id={`field-${field.name}-cell-format-max`}
+            label="Max"
+            type="number"
+            value={format.max?.toString() || ''}
+            onChange={(e) => updateField('cell_format', { ...format, max: Number(e.target.value) })}
+            disabled={!isEditing}
+          />
+          <Input
+            id={`field-${field.name}-cell-format-step`}
+            label="Step"
+            type="number"
+            value={format.step?.toString() || ''}
+            onChange={(e) => updateField('cell_format', { ...format, step: Number(e.target.value) })}
             disabled={!isEditing}
           />
         </div>
-      ))}
+      )}
     </div>
   );
-
-  const renderDependencies = (dependencies: Dependency | { [key: string]: Dependency }) => {
-    if ('step' in dependencies) {
-      // This is a single dependency object (for select type)
-      return (
-        <div className="ml-4 space-y-2">
-          <Input
-            id={`field-${field.name}-dependencies-step`}
-            label="Step"
-            value={dependencies.step}
-            onChange={(e) => updateField('dependencies', { ...dependencies, step: e.target.value })}
-            disabled={!isEditing}
-          />
-          <Input
-            id={`field-${field.name}-dependencies-field`}
-            label="Field"
-            value={dependencies.field}
-            onChange={(e) => updateField('dependencies', { ...dependencies, field: e.target.value })}
-            disabled={!isEditing}
-          />
-          <Input
-            id={`field-${field.name}-dependencies-use`}
-            label="Use"
-            value={dependencies.use}
-            onChange={(e) => updateField('dependencies', { ...dependencies, use: e.target.value })}
-            disabled={!isEditing}
-          />
-        </div>
-      );
-    } else {
-      // This is an object with multiple dependencies (for list_of_objects and matrix types)
-      return (
-        <div className="ml-4 space-y-2">
-          {Object.entries(dependencies).map(([key, value]) => (
-            <div key={key} className="border-l-2 pl-2 mb-2">
-              <Input
-                id={`field-${field.name}-dependencies-${key}-name`}
-                label="Dependent Field"
-                value={key}
-                onChange={(e) => {
-                  const newDependencies = { ...dependencies };
-                  delete newDependencies[key];
-                  newDependencies[e.target.value] = value;
-                  updateField('dependencies', newDependencies);
-                }}
-                disabled={!isEditing}
-              />
-              <Input
-                id={`field-${field.name}-dependencies-${key}-step`}
-                label="Step"
-                value={value.step}
-                onChange={(e) => updateField('dependencies', { 
-                  ...dependencies, 
-                  [key]: { ...value, step: e.target.value } 
-                })}
-                disabled={!isEditing}
-              />
-              <Input
-                id={`field-${field.name}-dependencies-${key}-field`}
-                label="Field"
-                value={value.field}
-                onChange={(e) => updateField('dependencies', { 
-                  ...dependencies, 
-                  [key]: { ...value, field: e.target.value } 
-                })}
-                disabled={!isEditing}
-              />
-              <Input
-                id={`field-${field.name}-dependencies-${key}-use`}
-                label="Use"
-                value={value.use}
-                onChange={(e) => updateField('dependencies', { 
-                  ...dependencies, 
-                  [key]: { ...value, use: e.target.value } 
-                })}
-                disabled={!isEditing}
-              />
-            </div>
-          ))}
-        </div>
-      );
-    }
-  };
 
   return (
-    <Card className="mb-4 p-4">
-      <Input
-        id={`field-${field.name}-name`}
-        label="Name"
-        value={field.name}
-        onChange={(e) => updateField('name', e.target.value)}
-        disabled={!isEditing}
-      />
-      <Input
-        id={`field-${field.name}-label`}
-        label="Label"
-        value={field.label}
-        onChange={(e) => updateField('label', e.target.value)}
-        disabled={!isEditing}
-      />
-      <Select
-        id={`field-${field.name}-type`}
-        label="Type"
-        value={field.type}
-        onChange={(e) => updateField('type', e.target.value)}
-        disabled={!isEditing}
-        options={['text', 'textarea', 'number', 'select', 'list_of_objects', 'matrix']}
-      />
+    <Card className="mb-6 p-6 bg-white shadow-md rounded-lg">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <Input
+          id={`field-${field.name}-name`}
+          label="Name"
+          value={field.name}
+          onChange={(e) => updateField('name', e.target.value)}
+          disabled={!isEditing}
+        />
+        <Input
+          id={`field-${field.name}-label`}
+          label="Label"
+          value={field.label}
+          onChange={(e) => updateField('label', e.target.value)}
+          disabled={!isEditing}
+        />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <Select
+          id={`field-${field.name}-type`}
+          label="Type"
+          value={field.type}
+          onChange={(e) => updateField('type', e.target.value)}
+          disabled={!isEditing}
+          options={['text', 'textarea', 'number', 'select', 'list_of_objects', 'matrix']}
+        />
+        <Input
+          id={`field-${field.name}-placeholder`}
+          label="Placeholder"
+          value={field.placeholder || ''}
+          onChange={(e) => updateField('placeholder', e.target.value)}
+          disabled={!isEditing}
+        />
+      </div>
       <Textarea
         id={`field-${field.name}-description`}
         label="Description"
         value={field.description || ''}
         onChange={(e) => updateField('description', e.target.value)}
         disabled={!isEditing}
-      />
-      <Input
-        id={`field-${field.name}-placeholder`}
-        label="Placeholder"
-        value={field.placeholder || ''}
-        onChange={(e) => updateField('placeholder', e.target.value)}
-        disabled={!isEditing}
+        className="mb-4"
       />
       {(field.type === 'list_of_objects' || field.type === 'select') && field.object_structure && (
         <div>
@@ -501,10 +624,24 @@ const FieldDetails: React.FC<{ field: Field; isEditing: boolean; onChange: (upda
         </div>
       )}
       {field.dependencies && (
-        <div>
-          <h4 className="font-semibold mt-2">Dependencies</h4>
+        <div className="mt-6">
+          <h4 className="font-semibold text-lg mb-2">Dependencies</h4>
           {renderDependencies(field.dependencies)}
         </div>
+      )}
+      {isEditing && !field.dependencies && (
+        <Button 
+          onClick={() => {
+            if (field.type === 'select') {
+              updateField('dependencies', { step: '', field: '', use: '' });
+            } else {
+              updateField('dependencies', { newDependency: { step: '', field: '', use: '' } });
+            }
+          }} 
+          className="bg-blue-500 hover:bg-blue-600 text-white mt-4"
+        >
+          Add Dependencies
+        </Button>
       )}
     </Card>
   );

@@ -30,7 +30,7 @@ export async function GET(
       include: { framework: true }
     })
 
-    console.log('Decision fetched:', JSON.stringify(decision, null, 2))
+    console.log(`Decision fetched: ${decision?.question.substring(0, 50)}...`);
 
     if (!decision) {
       console.log('Decision not found')
@@ -58,20 +58,18 @@ export async function GET(
       Object.assign(context, decision.data as Record<string, any>)
     }
 
-    console.log('Context prepared for AI suggestion:', JSON.stringify(context, null, 2))
+    console.log(`Context prepared for AI suggestion (keys): ${Object.keys(context).join(', ')}`);
 
     // Get AI suggestion
+    console.log(`Requesting AI suggestion for step ${step}`);
     const aiSuggestion = await getAiSuggestion(decision.framework.id, parseInt(step), context)
 
-    console.log('AI suggestion received:', JSON.stringify(aiSuggestion, null, 2))
+    console.log(`AI suggestion received for step ${step} (length: ${JSON.stringify(aiSuggestion).length})`);
 
     // Always return a 200 status, even if there was an error in generating the suggestion
     return NextResponse.json(aiSuggestion)
   } catch (error) {
     console.error('Error in suggestion route:', error)
-    return NextResponse.json({ 
-      suggestion: "An unexpected error occurred while processing your request.",
-      pre_filled_data: {}
-    })
+    return NextResponse.json({ error: 'An error occurred while getting the AI suggestion' }, { status: 500 })
   }
 }

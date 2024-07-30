@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface Framework {
   id: string;
@@ -14,6 +15,7 @@ export default function Frameworks() {
   const [frameworks, setFrameworks] = useState<Framework[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const router = useRouter()
 
   useEffect(() => {
     fetchFrameworks()
@@ -34,13 +36,44 @@ export default function Frameworks() {
   }
 
   const handleDeleteFramework = async (id: string) => {
+    if (confirm('Are you sure you want to delete this framework?')) {
+      try {
+        const response = await fetch(`/api/frameworks/${id}`, { 
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to delete framework');
+        }
+        
+        const result = await response.json();
+        console.log(result.message); // Log the success message
+        
+        setFrameworks(frameworks.filter(framework => framework.id !== id));
+      } catch (error) {
+        console.error('Error deleting framework:', error);
+        setError('Failed to delete framework. Please try again.');
+      }
+    }
+  }
+
+  const handleCloneFramework = async (id: string) => {
     try {
-      const response = await fetch(`/api/frameworks/${id}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete framework');
-      setFrameworks(frameworks.filter(framework => framework.id !== id));
+      const response = await fetch('/api/frameworks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cloneFrom: id }),
+      });
+      if (!response.ok) throw new Error('Failed to clone framework');
+      const newFramework = await response.json();
+      setFrameworks([newFramework, ...frameworks]);
     } catch (error) {
-      console.error('Error deleting framework:', error);
-      setError('Failed to delete framework. Please try again.');
+      console.error('Error cloning framework:', error);
+      setError('Failed to clone framework. Please try again.');
     }
   }
 
@@ -58,19 +91,19 @@ export default function Frameworks() {
           <div key={framework.id} className="bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-2">{framework.name}</h2>
             <p className="text-gray-600 mb-4">{framework.description}</p>
-            <Link href={`/frameworks/${framework.id}`} className="text-blue-500 hover:text-blue-700 mr-4">
-              View Details
-            </Link>
-            {framework.id !== 'default' && (
-              <>
-                <Link href={`/frameworks/${framework.id}/edit`} className="text-blue-500 hover:text-blue-700 mr-4">
-                  Edit
-                </Link>
+            <div className="flex space-x-4">
+              <Link href={`/frameworks/${framework.id}`} className="text-blue-500 hover:text-blue-700">
+                View Details
+              </Link>
+              {framework.id !== 'default' && (
                 <button onClick={() => handleDeleteFramework(framework.id)} className="text-red-500 hover:text-red-700">
                   Delete
                 </button>
-              </>
-            )}
+              )}
+              <button onClick={() => handleCloneFramework(framework.id)} className="text-green-500 hover:text-green-700">
+                Clone
+              </button>
+            </div>
           </div>
         ))}
       </div>

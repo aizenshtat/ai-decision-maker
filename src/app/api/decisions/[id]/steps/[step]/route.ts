@@ -10,9 +10,6 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string; step: string } }
 ) {
-  console.log('GET request received for decision step')
-  console.log('Params:', params)
-
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
@@ -20,8 +17,6 @@ export async function GET(
     }
 
     const { id, step } = params
-    console.log('Fetching decision:', id)
-
     const decision = await prisma.decision.findUnique({
       where: { id },
       include: { framework: true },
@@ -31,52 +26,45 @@ export async function GET(
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 })
     }
 
-    // Add this check
     if (decision.userId !== session.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    console.log('Decision found:', decision)
+    const steps = Array.isArray(decision.framework.steps) ? decision.framework.steps : 
+                  (typeof decision.framework.steps === 'string' ? JSON.parse(decision.framework.steps) : []);
 
-    let steps
-    try {
-      steps = typeof decision.framework.steps === 'string' 
-        ? JSON.parse(decision.framework.steps)
-        : decision.framework.steps;
-      
-      if (!Array.isArray(steps)) {
-        throw new Error('Steps is not an array')
-      }
-    } catch (error) {
-      console.error('Invalid steps data:', decision.framework.steps)
-      return NextResponse.json({ error: 'Invalid steps data' }, { status: 500 })
-    }
-
-    const stepIndex = Number(step)
+    const stepIndex = parseInt(step)
     if (!steps[stepIndex]) {
       return NextResponse.json({ error: 'Step not found' }, { status: 404 })
     }
 
     const currentStep = steps[stepIndex]
     
-    // Handle decision.data safely
-    const allStepData: Record<number, any> = typeof decision.data === 'string' 
+    const allStepData: Record<string, any> = typeof decision.data === 'string' 
       ? JSON.parse(decision.data || '{}')
       : decision.data || {};
 
-    const savedData = allStepData[stepIndex] || {}
+    const savedData = allStepData[currentStep.title] || {}
+    const aiSuggestionKey = `${currentStep.title}_ai_suggestion`
 
-    // Get AI suggestion
-    const context: Record<string, any> = {
-      initialQuestion: decision.question,
-      ...allStepData
-    };
+    let aiSuggestion = allStepData[aiSuggestionKey] || null;
 
-    let aiSuggestion;
-    if (allStepData[currentStep.title] && allStepData[currentStep.title].ai_suggestion) {
-      aiSuggestion = allStepData[currentStep.title].ai_suggestion;
-    } else {
+    if (!aiSuggestion) {
+      const context: Record<string, any> = {
+        initialQuestion: decision.question,
+        ...allStepData
+      };
       aiSuggestion = await getAiSuggestion(decision.frameworkId, stepIndex, context);
+      console.log(`New AI suggestion generated for step ${stepIndex}`);
+      
+      // Save the new AI suggestion
+      allStepData[aiSuggestionKey] = aiSuggestion;
+      await prisma.decision.update({
+        where: { id },
+        data: { data: allStepData },
+      });
+    } else {
+      console.log(`Using existing AI suggestion for step ${stepIndex}`);
     }
 
     return NextResponse.json({ 

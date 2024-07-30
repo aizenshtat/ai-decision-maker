@@ -15,7 +15,7 @@ export interface Step {
 export interface Field {
   name: string;
   label: string;
-  type: string;
+  type: string | { type: string; dependency?: Dependency };
   description?: string;
   placeholder?: string;
   object_structure?: ObjectStructure;
@@ -35,7 +35,7 @@ export interface MatrixStructure {
 }
 
 export interface CellFormat {
-  type: string;
+  type: 'number' | 'text' | 'select';
   min?: number;
   max?: number;
   step?: number;

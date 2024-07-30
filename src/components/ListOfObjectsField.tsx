@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react'
 import { Card, Button, Input, Label, ErrorMessage } from './ui'
+import SelectField from './SelectField'
 
 interface ListOfObjectsFieldProps {
   field: {
     name: string;
     label: string;
-    object_structure: { [key: string]: string | { type: string; min?: number; max?: number; step?: number } };
+    object_structure: { [key: string]: string | { type: string; min?: number; max?: number; step?: number; dependency?: any } };
     validation?: {
       total_weight?: {
         max: number;
@@ -18,9 +19,10 @@ interface ListOfObjectsFieldProps {
   value: { [key: string]: string | number }[] | undefined;
   onChange: (value: { [key: string]: string | number }[]) => void;
   isEditable?: boolean;
+  getOptionsFromPreviousStep: (dependency: string) => string[];
 }
 
-const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, onChange, isEditable = true }) => {
+const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, onChange, isEditable = true, getOptionsFromPreviousStep }) => {
   const [error, setError] = useState<string | null>(null);
   const [internalValue, setInternalValue] = useState<{ [key: string]: string | number }[]>([]);
 
@@ -84,26 +86,44 @@ const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, o
     }
   };
 
-  const renderInputField = (item: { [key: string]: string | number }, index: number, key: string, type: string | { type: string; min?: number; max?: number; step?: number }) => {
+  const renderInputField = (item: { [key: string]: string | number }, index: number, key: string, fieldType: string | { type: string; min?: number; max?: number; step?: number; dependency?: any }) => {
     const inputProps = {
       id: `${field.name}-${index}-${key}`,
       value: item[key].toString(),
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleItemChange(index, key, e.target.value)
+      onChange: (e: React.ChangeEvent<HTMLInputElement> | string) => {
+        const newValue = typeof e === 'string' ? e : e.target.value;
+        handleItemChange(index, key, newValue);
+      }
     };
 
-    if (typeof type === 'string') {
-      return <Input type={type} {...inputProps} />;
-    } else {
+    if (typeof fieldType === 'object' && fieldType.type === 'select' && fieldType.dependency) {
+      const options = getOptionsFromPreviousStep(`${fieldType.dependency.step}.${fieldType.dependency.field}.${fieldType.dependency.use}`);
+      return (
+        <SelectField
+          field={{
+            name: `${field.name}-${index}-${key}`,
+            label: key,
+            options: options
+          }}
+          value={item[key].toString()}
+          onChange={(value) => handleItemChange(index, key, value)}
+        />
+      );
+    } else if (typeof fieldType === 'string') {
+      return <Input type={fieldType} {...inputProps} />;
+    } else if (typeof fieldType === 'object' && fieldType.type === 'number') {
       return (
         <Input
           type="number"
-          min={type.min}
-          max={type.max}
-          step={type.step}
+          min={fieldType.min}
+          max={fieldType.max}
+          step={fieldType.step}
           {...inputProps}
           onChange={(e) => handleItemChange(index, key, Number(e.target.value))}
         />
       );
+    } else {
+      return <Input type="text" {...inputProps} />;
     }
   };
 
