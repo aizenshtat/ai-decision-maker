@@ -1,69 +1,84 @@
 import React from 'react';
 
 export const Card: React.FC<React.HTMLProps<HTMLDivElement>> = ({ children, className, ...props }) => (
-  <div className={`bg-white shadow-md rounded-lg p-6 ${className}`} {...props}>
+  <div className={`card ${className}`} {...props}>
     {children}
   </div>
 );
 
 export const Button: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, className, ...props }) => (
   <button
-    className={`px-4 py-2 rounded-md transition duration-150 ease-in-out ${
-      props.disabled
-        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-        : 'bg-blue-500 text-white hover:bg-blue-600'
-    } ${className}`}
+    className={`btn-primary ${props.disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
     {...props}
   >
     {children}
   </button>
 );
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  id: string;
-}
-
-export const Input: React.FC<InputProps> = ({ label, id, className, ...props }) => (
-  <div className="mb-4">
-    {label && <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label?: string }> = ({ label, id, className, ...props }) => (
+  <div className="form-group">
+    {label && <label htmlFor={id} className="form-label">{label}</label>}
     <input
       id={id}
-      className={`w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${className}`}
+      className={`input-base ${className}`}
       {...props}
     />
   </div>
 );
 
+export const Textarea: React.FC<React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string }> = ({ label, id, className, ...props }) => (
+  <div className="form-group">
+    {label && <label htmlFor={id} className="form-label">{label}</label>}
+    <textarea
+      id={id}
+      className={`input-base ${className}`}
+      {...props}
+    />
+  </div>
+);
+
+type SelectOption = string | { value: string; label: string };
+
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string;
+  options: SelectOption[];
+}
+
+export const Select: React.FC<SelectProps> = ({ label, id, className, options, ...props }) => (
+  <div className="form-group">
+    {label && <label htmlFor={id} className="form-label">{label}</label>}
+    <select
+      id={id}
+      className={`input-base ${className}`}
+      {...props}
+    >
+      {options.map((option, index) => (
+        <option key={index} value={typeof option === 'string' ? option : option.value}>
+          {typeof option === 'string' ? option : option.label}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
 export const Label: React.FC<React.LabelHTMLAttributes<HTMLLabelElement>> = ({ children, className, ...props }) => (
-  <label className={`block text-sm font-medium text-gray-700 mb-1 ${className}`} {...props}>
+  <label className={`form-label ${className}`} {...props}>
     {children}
   </label>
 );
 
 export const ErrorMessage: React.FC<React.HTMLProps<HTMLParagraphElement>> = ({ children, className, ...props }) => (
-  <p className={`text-red-500 mt-1 ${className}`} {...props}>
+  <p className={`text-red-500 text-sm mt-1 ${className}`} {...props}>
     {children}
   </p>
 );
 
-interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label?: string;
-  id: string;
+interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  icon: React.ElementType;
 }
 
-export const Textarea: React.FC<TextareaProps> = ({ label, id, className, ...props }) => (
-  <div className="mb-4">
-    {label && <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
-    <textarea
-      id={id}
-      className={`w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 ${className}`}
-      {...props}
-    />
-  </div>
+export const IconButton: React.FC<IconButtonProps> = ({ icon: Icon, className, ...props }) => (
+  <button className={`p-2 rounded-full hover:bg-gray-200 ${className}`} {...props}>
+    <Icon size={20} />
+  </button>
 );
-
-import { IconButton } from '../IconButton';
-import { Select } from '../Select';
-
-export { IconButton, Select };

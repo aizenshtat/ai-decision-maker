@@ -1,6 +1,7 @@
 // src/components/TextField.tsx
 
 import React from 'react'
+import { Input, Textarea } from './ui'
 
 interface TextFieldProps {
   field: {
@@ -16,28 +17,23 @@ interface TextFieldProps {
 const TextField: React.FC<TextFieldProps> = ({ field, value, onChange }) => {
   return (
     <div className="mb-6">
-      <label htmlFor={field.name} className="block text-sm font-semibold text-gray-700 mb-2">
-        {field.label}
-      </label>
       {field.type === 'textarea' ? (
-        <textarea
+        <Textarea
           id={field.name}
-          name={field.name}
+          label={field.label}
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
           rows={4}
         />
       ) : (
-        <input
+        <Input
           type={field.type}
           id={field.name}
-          name={field.name}
+          label={field.label}
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       )}
     </div>

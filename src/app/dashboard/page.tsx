@@ -71,7 +71,7 @@ export default function Dashboard() {
   return (
     <div className="max-w-4xl mx-auto mt-10 px-4">
       <h1 className="text-3xl font-bold mb-6">Your Decisions</h1>
-      <Link href="/decisions/new" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 mb-6 inline-block">
+      <Link href="/decisions/new" className="btn-primary mb-6 inline-block">
         Start New Decision
       </Link>
       {decisions.length === 0 ? (
@@ -79,7 +79,7 @@ export default function Dashboard() {
       ) : (
         <div className="grid gap-6 mt-6">
           {decisions.map((decision) => (
-            <div key={decision.id} className="bg-white shadow-md rounded-lg p-6 mb-4">
+            <div key={decision.id} className="card mb-4">
               <h2 className="text-xl font-semibold mb-2">{decision.question}</h2>
               <p className="text-gray-600 mb-2">Framework: {decision.framework.name}</p>
               <p className="text-gray-600 mb-2">Created: {new Date(decision.createdAt).toLocaleString()}</p>
@@ -91,7 +91,7 @@ export default function Dashboard() {
               ) : decision.status === 'completed' && (
                 <button
                   onClick={() => setShowFeedbackForm(decision.id)}
-                  className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 mr-2"
+                  className="btn-secondary mr-2"
                 >
                   Provide Feedback
                 </button>
@@ -106,21 +106,21 @@ export default function Dashboard() {
                 {decision.status === 'completed' ? (
                   <button
                     onClick={() => router.push(`/decisions/${decision.id}/summary`)}
-                    className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+                    className="btn-primary"
                   >
                     View Summary
                   </button>
                 ) : (
                   <button
                     onClick={() => router.push(`/decisions/${decision.id}/steps/${decision.currentStep}`)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                    className="btn-primary"
                   >
                     Continue
                   </button>
                 )}
                 <button
                   onClick={() => handleDeleteDecision(decision.id)}
-                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+                  className="btn-danger"
                 >
                   Delete
                 </button>

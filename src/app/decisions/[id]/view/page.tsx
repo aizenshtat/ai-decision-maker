@@ -120,7 +120,7 @@ export default function ViewDecision() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
+    <div className="max-w-4xl mx-auto mt-10 card">
       <h1 className="text-3xl font-bold mb-6">{decision.question}</h1>
       <p className="text-gray-600 mb-4">Framework: {decision.framework.name}</p>
       {decision.framework.steps.map((step: { title: string }, index: number) => {
@@ -134,7 +134,7 @@ export default function ViewDecision() {
         );
       })}
       <div className="mt-8">
-        <Link href={`/decisions/${id}/summary`} className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+        <Link href={`/decisions/${id}/summary`} className="btn-primary">
           View Summary
         </Link>
       </div>

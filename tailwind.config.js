@@ -2,9 +2,10 @@
 
 module.exports = {
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
@@ -20,6 +21,21 @@ module.exports = {
             },
           },
         },
+      },
+      colors: {
+        primary: {
+          50: '#e6f0ff',
+          100: '#bdd6ff',
+          200: '#94bcff',
+          300: '#6ba2ff',
+          400: '#4288ff',
+          500: '#196eff',
+          600: '#0054e6',
+          700: '#003db3',
+          800: '#002680',
+          900: '#00104d',
+        },
+        // Add other color palettes as needed
       },
     },
   },

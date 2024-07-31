@@ -41,10 +41,10 @@ export default function FeedbackSubmission() {
 
   return (
     <div className="max-w-2xl mx-auto mt-10">
-    <h1 className="text-3xl font-bold mb-6">Provide Feedback</h1>
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6">
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
+      <h1 className="text-3xl font-bold mb-6">Provide Feedback</h1>
+      <form onSubmit={handleSubmit} className="card">
+        <div className="form-group">
+          <label className="form-label">
             How helpful was this decision-making process?
           </label>
           <div className="flex space-x-4">
@@ -60,13 +60,13 @@ export default function FeedbackSubmission() {
             ))}
           </div>
         </div>
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="comment">
+        <div className="form-group">
+          <label className="form-label" htmlFor="comment">
             Additional Comments (optional)
           </label>
           <textarea
             id="comment"
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className="input-base"
             rows={4}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
@@ -76,11 +76,11 @@ export default function FeedbackSubmission() {
         <button
           type="submit"
           disabled={isSubmitting || rating === 0}
-          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:bg-gray-400"
+          className="btn-primary disabled:bg-gray-400"
         >
-        {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
-      </button>
-    </form>
-  </div>
+          {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+        </button>
+      </form>
+    </div>
   )
 }

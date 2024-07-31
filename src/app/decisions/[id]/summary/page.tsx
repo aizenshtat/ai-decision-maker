@@ -72,7 +72,7 @@ export default function DecisionSummary() {
   return (
     <div className="max-w-2xl mx-auto mt-10">
       <h1 className="text-3xl font-bold mb-5">Decision Summary</h1>
-      <div className="bg-white shadow-md rounded-lg p-6">
+      <div className="card">
         <ReactMarkdown 
           remarkPlugins={[remarkGfm]}
           components={{
@@ -105,7 +105,7 @@ export default function DecisionSummary() {
       ) : !feedbackSubmitted && !showFeedbackForm && (
         <button
           onClick={() => setShowFeedbackForm(true)}
-          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+          className="mt-4 btn-primary"
         >
           Provide Feedback
         </button>
@@ -119,10 +119,10 @@ export default function DecisionSummary() {
       )}
       
       <div className="mt-6 flex justify-between">
-        <Link href="/dashboard" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+        <Link href="/dashboard" className="btn-secondary">
           Back to Dashboard
         </Link>
-        <Link href={`/decisions/${id}/view`} className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
+        <Link href={`/decisions/${id}/view`} className="btn-primary">
           View Full Decision
         </Link>
       </div>

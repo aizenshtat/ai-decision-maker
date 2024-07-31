@@ -1,6 +1,7 @@
 // src/components/MatrixField.tsx
 
 import React from 'react'
+import { Input, Label } from './ui'
 
 interface MatrixFieldProps {
   field: {
@@ -49,7 +50,7 @@ const MatrixField: React.FC<MatrixFieldProps> = ({ field, value, onChange, isEdi
 
   return (
     <div className="mb-6">
-      <label className="block text-sm font-semibold text-gray-700 mb-2">{field.label}</label>
+      <Label htmlFor={field.name}>{field.label}</Label>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
           <thead className="bg-gray-50">
@@ -67,11 +68,10 @@ const MatrixField: React.FC<MatrixFieldProps> = ({ field, value, onChange, isEdi
                 {columnOptions.map((column) => (
                   <td key={`${row}-${column}`} className="p-3">
                     {isEditable ? (
-                      <input
+                      <Input
                         type="number"
                         value={value && value[row] && value[row][column] || ''}
                         onChange={(e) => handleCellChange(row, column, e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         min={1}
                         max={5}
                       />

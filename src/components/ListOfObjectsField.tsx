@@ -1,8 +1,7 @@
 // src/components/ListOfObjectsField.tsx
 
 import React, { useState, useEffect } from 'react'
-import { Card, Button, Input, Label, ErrorMessage } from './ui'
-import SelectField from './SelectField'
+import { Card, Button, Input, Select, ErrorMessage } from './ui'
 import { Field, ObjectStructure } from '@/types/framework'
 
 interface ListOfObjectsFieldProps {
@@ -87,19 +86,19 @@ const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, o
       }
     };
 
-    if (typeof fieldType === 'object' && fieldType.type === 'select' && fieldType.dependency) {
-      const options = getOptionsFromPreviousStep(`${fieldType.dependency.step}.${fieldType.dependency.field}.${fieldType.dependency.use}`);
-      return (
-        <SelectField
-          field={{
-            name: `${field.name}-${index}-${key}`,
-            label: key,
-            options: options
-          }}
-          value={item[key].toString()}
-          onChange={(value) => handleItemChange(index, key, value)}
-        />
-      );
+    if (typeof fieldType === 'object' && 'dependency' in fieldType && fieldType.dependency) {
+      const { step, field, use } = fieldType.dependency;
+      if (step && field && use) {
+        const options = getOptionsFromPreviousStep(`${step}.${field}.${use}`);
+        return (
+          <Select
+            label={key}
+            value={item[key].toString()}
+            onChange={(e) => handleItemChange(index, key, e.target.value)}
+            options={options}
+          />
+        );
+      }
     } else if (typeof fieldType === 'string') {
       return <Input type={fieldType} {...inputProps} />;
     } else if (typeof fieldType === 'object' && fieldType.type === 'number') {
@@ -120,12 +119,12 @@ const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, o
 
   return (
     <div className="space-y-4">
-      <Label>{field.label}</Label>
+      <label className="form-label">{field.label}</label>
       {internalValue.map((item, index) => (
-        <div key={index} className="bg-white shadow-sm rounded-lg p-4">
+        <Card key={index} className="space-y-4">
           {Object.entries(field.object_structure || {}).map(([key, type]) => (
-            <div key={key} className="mb-4">
-              <Label htmlFor={`${field.name}-${index}-${key}`} className="font-medium text-gray-700">{key}</Label>
+            <div key={key}>
+              <label htmlFor={`${field.name}-${index}-${key}`} className="form-label">{key}</label>
               {isEditable ? (
                 renderInputField(item, index, key, type)
               ) : (
@@ -134,14 +133,14 @@ const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, o
             </div>
           ))}
           {isEditable && (
-            <Button onClick={() => handleRemove(index)} className="bg-red-500 hover:bg-red-600 text-white">
+            <Button onClick={() => handleRemove(index)} className="btn-danger">
               Remove
             </Button>
           )}
-        </div>
+        </Card>
       ))}
       {isEditable && (
-        <Button onClick={handleAdd} className="bg-green-500 hover:bg-green-600 text-white">
+        <Button onClick={handleAdd} className="btn-secondary">
           Add Item
         </Button>
       )}

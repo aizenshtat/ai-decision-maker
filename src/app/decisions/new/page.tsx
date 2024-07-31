@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { handleClientError } from '@/utils/errorHandling'
 import { Framework } from '@/types/framework'
+import { Card, Button, Input, Select, Textarea } from '@/components/ui'
 
 export default function NewDecision() {
   const [question, setQuestion] = useState('')
@@ -59,44 +60,44 @@ export default function NewDecision() {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-10">
+    <Card className="max-w-md mx-auto mt-10">
       <h1 className="text-2xl font-bold mb-5">Start a New Decision</h1>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="question" className="block mb-2">What decision do you need help with?</label>
-          <textarea
+        <div className="form-group">
+          <label htmlFor="question" className="form-label">What decision do you need help with?</label>
+          <Textarea
             id="question"
             value={question}
-            onChange={(e) => setQuestion(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setQuestion(e.target.value)}
             required
-            className="w-full p-2 border border-gray-300 rounded"
             rows={4}
           />
         </div>
-        <div>
-          <label htmlFor="framework" className="block mb-2">Select a Decision Framework</label>
-          <select
+        <div className="form-group">
+          <label htmlFor="framework" className="form-label">Select a Decision Framework</label>
+          <Select
             id="framework"
             value={frameworkId}
-            onChange={(e) => setFrameworkId(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFrameworkId(e.target.value)}
             required
-            className="w-full p-2 border border-gray-300 rounded"
-          >
-            <option value="">Select a framework</option>
-            {frameworks.map((framework) => (
-              <option key={framework.id} value={framework.id}>{framework.name}</option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: "Select a framework" },
+              ...frameworks.map((framework) => ({
+                value: framework.id,
+                label: framework.name,
+              })),
+            ]}
+          />
         </div>
-        <button
+        <Button
           type="submit"
           disabled={isLoading || !frameworkId}
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-blue-300"
+          className="w-full btn-primary"
         >
           {isLoading ? 'Processing...' : 'Start Decision Process'}
-        </button>
+        </Button>
       </form>
-    </div>
+    </Card>
   )
 }
