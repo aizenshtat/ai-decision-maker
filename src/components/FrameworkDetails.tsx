@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { Framework, Step, Field, ObjectStructure, MatrixStructure, CellFormat, Validation, Dependency } from '@/types/framework'
 import { Card, Button, Input, Label, Textarea, IconButton, Select } from './ui'
 import { ChevronDown, ChevronUp, Plus, Trash } from 'lucide-react'
+import { handleExpiredSession } from '@/utils/sessionUtils'
 
 interface FrameworkDetailsProps {
   id: string
@@ -17,6 +18,7 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [expandedSteps, setExpandedSteps] = useState<number[]>([])
+  const [isArchived, setIsArchived] = useState(false)
 
   useEffect(() => {
     fetchFramework()
@@ -25,9 +27,14 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
   const fetchFramework = async () => {
     try {
       const response = await fetch(`/api/frameworks/${id}`)
+      if (response.status === 401) {
+        await handleExpiredSession();
+        return;
+      }
       if (!response.ok) throw new Error('Failed to fetch framework')
       const data = await response.json()
       setFramework(data)
+      setIsArchived(data.archived)
     } catch (error) {
       console.error('Error fetching framework:', error)
       setError('Failed to load framework. Please try again.')
@@ -45,10 +52,12 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
       const response = await fetch(`/api/frameworks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(framework),
+        body: JSON.stringify({ ...framework, archived: isArchived }),
       })
       if (!response.ok) throw new Error('Failed to update framework')
       setIsEditing(false)
+      // Refresh the framework data
+      await fetchFramework()
     } catch (error) {
       console.error('Error updating framework:', error)
       setError('Failed to update framework. Please try again.')
@@ -221,15 +230,28 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
           )}
         </div>
       </div>
-      <div className="mt-6 flex justify-end space-x-4">
-        {isEditing ? (
-          <>
-            <Button onClick={handleSave}>Save</Button>
-            <Button onClick={handleCancel} className="bg-white text-black border border-gray-300 hover:bg-gray-100">Cancel</Button>
-          </>
-        ) : (
-          framework.id !== 'default' && <Button onClick={handleEdit}>Edit</Button>
-        )}
+      <div className="mt-6 flex justify-between items-center">
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="archived"
+            checked={isArchived}
+            onChange={(e) => setIsArchived(e.target.checked)}
+            disabled={!isEditing}
+            className="mr-2"
+          />
+          <label htmlFor="archived">Archived</label>
+        </div>
+        <div className="flex space-x-4">
+          {isEditing ? (
+            <>
+              <Button onClick={handleSave}>Save</Button>
+              <Button onClick={handleCancel} className="bg-white text-black border border-gray-300 hover:bg-gray-100">Cancel</Button>
+            </>
+          ) : (
+            framework.id !== 'default' && !isArchived && <Button onClick={handleEdit}>Edit</Button>
+          )}
+        </div>
       </div>
     </Card>
   )

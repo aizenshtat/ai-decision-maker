@@ -4,13 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { handleClientError } from '@/utils/errorHandling'
-
-interface Framework {
-  id: string;
-  name: string;
-  description: string;
-  userId: string;
-}
+import { handleExpiredSession } from '@/utils/sessionUtils'
+import { Framework } from '@/types/framework'
+import FrameworkCard from '@/components/FrameworkCard'
 
 export default function Frameworks() {
   const [frameworks, setFrameworks] = useState<Framework[]>([])
@@ -24,7 +20,11 @@ export default function Frameworks() {
 
   const fetchFrameworks = async () => {
     try {
-      const response = await fetch('/api/frameworks')
+      const response = await fetch('/api/frameworks?includeArchived=true')
+      if (response.status === 401) {
+        await handleExpiredSession();
+        return;
+      }
       if (!response.ok) throw new Error('Failed to fetch frameworks')
       const data = await response.json()
       setFrameworks(data)
@@ -36,26 +36,51 @@ export default function Frameworks() {
   }
 
   const handleDeleteFramework = async (id: string) => {
-    if (confirm('Are you sure you want to delete this framework?')) {
-      try {
-        const response = await fetch(`/api/frameworks/${id}`, { 
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to delete framework');
+    try {
+      const response = await fetch(`/api/frameworks/${id}`, { 
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const result = await response.json();
+      
+      if (response.status === 400 && result.canArchive) {
+        if (confirm(result.message)) {
+          await archiveFramework(id);
         }
-        
-        const result = await response.json();
+      } else if (response.ok) {
         console.log(result.message);
-        
         setFrameworks(frameworks.filter(framework => framework.id !== id));
-      } catch (error) {
-        setError(handleClientError(error));
+      } else {
+        throw new Error(result.message || 'Failed to delete framework');
       }
+    } catch (error) {
+      setError(handleClientError(error));
+    }
+  }
+
+  const archiveFramework = async (id: string) => {
+    try {
+      const response = await fetch(`/api/frameworks/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ archived: true }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to archive framework');
+      }
+
+      const updatedFramework = await response.json();
+      setFrameworks(frameworks.map(framework => 
+        framework.id === id ? { ...framework, archived: true } : framework
+      ));
+    } catch (error) {
+      setError(handleClientError(error));
     }
   }
 
@@ -78,32 +103,36 @@ export default function Frameworks() {
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 px-4">
-      <h1 className="text-3xl font-bold mb-6">Decision Frameworks</h1>
-      <Link href="/frameworks/new" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 mb-6 inline-block">
-        Create New Framework
-      </Link>
-      <div className="grid gap-6 mt-6">
-        {frameworks.map((framework) => (
-          <div key={framework.id} className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-2">{framework.name}</h2>
-            <p className="text-gray-600 mb-4">{framework.description}</p>
-            <div className="flex space-x-4">
-              <Link href={`/frameworks/${framework.id}`} className="text-blue-500 hover:text-blue-700">
-                View Details
-              </Link>
-              {framework.id !== 'default' && (
-                <button onClick={() => handleDeleteFramework(framework.id)} className="text-red-500 hover:text-red-700">
-                  Delete
-                </button>
-              )}
-              <button onClick={() => handleCloneFramework(framework.id)} className="text-green-500 hover:text-green-700">
-                Clone
-              </button>
-            </div>
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Frameworks</h1>
+      <div className="grid gap-6">
+        <h2 className="text-2xl font-semibold">Active Frameworks</h2>
+        {frameworks.filter(framework => !framework.archived).map((framework) => (
+          <FrameworkCard
+            key={framework.id}
+            framework={framework}
+            onDelete={handleDeleteFramework}
+            onClone={handleCloneFramework}
+            onArchive={archiveFramework}
+            isArchived={false}
+          />
         ))}
       </div>
+      {frameworks.some(framework => framework.archived) && (
+        <div className="grid gap-6 mt-6">
+          <h2 className="text-2xl font-semibold">Archived Frameworks</h2>
+          {frameworks.filter(framework => framework.archived).map((framework) => (
+            <FrameworkCard
+              key={framework.id}
+              framework={framework}
+              onDelete={handleDeleteFramework}
+              onClone={handleCloneFramework}
+              onArchive={archiveFramework}
+              isArchived={true}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

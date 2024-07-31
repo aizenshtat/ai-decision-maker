@@ -48,13 +48,14 @@ model Feedback {
 }
 
 model Framework {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   description String?
   steps       Json
   userId      String
-  user        User     @relation(fields: [userId], references: [id])
+  archived    Boolean   @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
   decisions   Decision[]
 }
