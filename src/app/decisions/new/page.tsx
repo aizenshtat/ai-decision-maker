@@ -20,12 +20,13 @@ export default function NewDecision() {
 
   const fetchFrameworks = async () => {
     try {
-      const response = await fetch('/api/frameworks')
+      const response = await fetch('/api/frameworks?includeArchived=false')
       if (!response.ok) throw new Error('Failed to fetch frameworks')
       const data = await response.json()
-      setFrameworks(data)
-      if (data.length > 0) {
-        setFrameworkId(data[0].id)
+      const activeFrameworks = data.filter((framework: Framework) => !framework.archived)
+      setFrameworks(activeFrameworks)
+      if (activeFrameworks.length > 0) {
+        setFrameworkId(activeFrameworks[0].id)
       }
     } catch (error) {
       setError(handleClientError(error))

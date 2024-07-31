@@ -58,6 +58,7 @@ export async function GET(
         : null,
       framework: {
         ...decision.framework,
+        archived: decision.framework.archived,
         steps: parseSteps(decision.framework.steps)
       }
     }
@@ -92,11 +93,17 @@ export async function DELETE(
       throw new AppError('Forbidden', 403)
     }
 
+    // Delete related feedback first
+    await prisma.feedback.deleteMany({
+      where: { decisionId: id }
+    })
+
+    // Then delete the decision
     await prisma.decision.delete({
       where: { id: id }
     })
 
-    return NextResponse.json({ message: 'Decision deleted successfully' })
+    return NextResponse.json({ message: 'Decision and related feedback deleted successfully' })
   } catch (error) {
     return handleApiError(error)
   }

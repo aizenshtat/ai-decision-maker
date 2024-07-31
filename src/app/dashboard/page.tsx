@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Decision } from '@/types/decision'
 import { handleClientError } from '@/utils/errorHandling'
 import FeedbackForm from '@/components/FeedbackForm'
+import { handleExpiredSession } from '@/utils/sessionUtils'
 
 export default function Dashboard() {
   const [decisions, setDecisions] = useState<Decision[]>([])
@@ -23,6 +24,10 @@ export default function Dashboard() {
   const fetchDecisions = async () => {
     try {
       const response = await fetch('/api/decisions')
+      if (response.status === 401) {
+        await handleExpiredSession();
+        return;
+      }
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -36,11 +41,12 @@ export default function Dashboard() {
   }
 
   const handleDeleteDecision = async (id: string) => {
-    if (confirm('Are you sure you want to delete this decision?')) {
+    if (confirm('Are you sure you want to delete this decision? This action cannot be undone and will also delete all related feedback.')) {
       try {
         const response = await fetch(`/api/decisions/${id}`, { method: 'DELETE' })
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+          const errorData = await response.json();
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
         setDecisions(decisions.filter(decision => decision.id !== id))
       } catch (error) {

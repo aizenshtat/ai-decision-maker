@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { handleClientError } from '@/utils/errorHandling'
 import FeedbackForm from '@/components/FeedbackForm'
+import { handleExpiredSession } from '@/utils/sessionUtils'
 
 export default function DecisionSummary() {
   const [summary, setSummary] = useState('')
@@ -25,7 +26,12 @@ export default function DecisionSummary() {
 
   const fetchSummary = useCallback(async () => {
     try {
+      setIsLoading(true)
       const response = await fetch(`/api/decisions/${id}/summary`)
+      if (response.status === 401) {
+        await handleExpiredSession();
+        return;
+      }
       if (!response.ok) throw new Error('Failed to fetch summary')
       const data = await response.json()
       setSummary(data.summary)
@@ -42,7 +48,7 @@ export default function DecisionSummary() {
     } finally {
       setIsLoading(false)
     }
-  }, [id])
+  }, [id, handleExpiredSession])
 
   useEffect(() => {
     fetchSummary()

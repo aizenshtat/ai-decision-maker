@@ -6,6 +6,7 @@ export interface Framework {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
+  archived: boolean;
 }
 
 export interface Step {

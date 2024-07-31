@@ -16,6 +16,7 @@ import { Card, Button, Input, Label, ErrorMessage } from '@/components/ui'
 import Link from 'next/link'
 import { handleClientError } from '@/utils/errorHandling'
 import { Step, Field, Dependency } from '@/types/framework'
+import { handleExpiredSession } from '@/utils/sessionUtils'
 
 type StepData = Step & {
   status?: 'completed';
@@ -96,6 +97,11 @@ export default function DecisionStep() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stepData: inputs, aiSuggestion }),
       })
+
+      if (response.status === 401) {
+        await handleExpiredSession();
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
