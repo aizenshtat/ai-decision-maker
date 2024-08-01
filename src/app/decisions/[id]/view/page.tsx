@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
@@ -18,11 +18,7 @@ export default function ViewDecision() {
   const params = useParams()
   const { id } = params
 
-  useEffect(() => {
-    fetchDecisionData()
-  }, [id])
-
-  const fetchDecisionData = async () => {
+  const fetchDecisionData = useCallback(async () => {
     try {
       const response = await fetch(`/api/decisions/${id}`)
       if (!response.ok) throw new Error('Failed to fetch decision data')
@@ -34,7 +30,11 @@ export default function ViewDecision() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    fetchDecisionData()
+  }, [fetchDecisionData])
 
   if (isLoading) return <div className="text-center mt-10">Loading decision...</div>
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>

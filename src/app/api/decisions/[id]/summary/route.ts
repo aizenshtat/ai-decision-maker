@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 import { generateDecisionSummary } from '@/services/aiSuggestionService'
 import { AppError, handleApiError } from '@/utils/errorHandling'
 import { getServerSession } from "next-auth/next"
-import { authOptions } from '../../../auth/[...nextauth]/route'
+import { authOptions } from '../../../auth/[...nextauth]/options'
 
 export async function GET(
   request: Request,

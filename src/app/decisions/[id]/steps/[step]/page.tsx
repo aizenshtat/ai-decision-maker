@@ -17,6 +17,7 @@ import Link from 'next/link'
 import { handleClientError } from '@/utils/errorHandling'
 import { Step, Field, Dependency } from '@/types/framework'
 import { handleExpiredSession } from '@/utils/sessionUtils'
+import { authenticatedFetch } from '@/utils/api'
 
 type StepData = Step & {
   status?: 'completed';
@@ -49,10 +50,8 @@ export default function DecisionStep() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/decisions/${id}/steps/${step}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const response = await authenticatedFetch(`/api/decisions/${id}/steps/${step}`);
+      if (!response) return; // Session expired and user is redirected
       const data = await response.json();
       console.log('Fetched step data:', data);
       
@@ -92,17 +91,12 @@ export default function DecisionStep() {
     setError('')
 
     try {
-      const response = await fetch(`/api/decisions/${id}/steps/${step}/submit`, {
+      const response = await authenticatedFetch(`/api/decisions/${id}/steps/${step}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stepData: inputs, aiSuggestion }),
       })
-
-      if (response.status === 401) {
-        await handleExpiredSession();
-        return;
-      }
-
+      if (!response) return; // Session expired and user is redirected
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

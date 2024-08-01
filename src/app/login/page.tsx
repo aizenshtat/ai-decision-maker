@@ -6,16 +6,27 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { validateInput, required, isEmail } from '@/utils/validation'
 
 export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState<{ [key: string]: string[] }>({})
   const router = useRouter()
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string[] } = {
+      username: validateInput(username, [required, isEmail]),
+      password: validateInput(password, [required]),
+    }
+
+    setErrors(newErrors)
+    return Object.values(newErrors).every(fieldErrors => fieldErrors.length === 0)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    if (!validateForm()) return
 
     try {
       const result = await signIn('credentials', {
@@ -25,14 +36,13 @@ export default function Login() {
       })
 
       if (result?.error) {
-        setError('Invalid username or password')
-        console.error('Login error:', result.error)
+        setErrors({ form: [result.error] })
       } else {
         router.push('/dashboard')
       }
     } catch (error) {
       console.error('Login error:', error)
-      setError('An error occurred during login. Please try again.')
+      setErrors({ form: ['An error occurred during login. Please try again.'] })
     }
   }
 
@@ -45,30 +55,40 @@ export default function Login() {
             Username
           </label>
           <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline ${
+              errors.username ? 'border-red-500' : ''
+            }`}
             id="username"
             type="text"
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            required
           />
+          {errors.username && errors.username.map((error, index) => (
+            <p key={index} className="text-red-500 text-xs italic">{error}</p>
+          ))}
         </div>
         <div className="mb-6">
           <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
             Password
           </label>
           <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
+            className={`shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline ${
+              errors.password ? 'border-red-500' : ''
+            }`}
             id="password"
             type="password"
             placeholder="******************"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
           />
+          {errors.password && errors.password.map((error, index) => (
+            <p key={index} className="text-red-500 text-xs italic">{error}</p>
+          ))}
         </div>
-        {error && <p className="text-red-500 text-xs italic mb-4">{error}</p>}
+        {errors.form && errors.form.map((error, index) => (
+          <p key={index} className="text-red-500 text-xs italic mb-4">{error}</p>
+        ))}
         <div className="flex items-center justify-between">
           <button
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"

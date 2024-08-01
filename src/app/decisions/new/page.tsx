@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation'
 import { handleClientError } from '@/utils/errorHandling'
 import { Framework } from '@/types/framework'
 import { Card, Button, Input, Select, Textarea } from '@/components/ui'
+import { validateInput, required } from '@/utils/validation'
 
 export default function NewDecision() {
   const [question, setQuestion] = useState('')
   const [frameworkId, setFrameworkId] = useState('')
   const [frameworks, setFrameworks] = useState<Framework[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState<{ [key: string]: string[] }>({})
   const router = useRouter()
 
   useEffect(() => {
@@ -29,14 +30,24 @@ export default function NewDecision() {
         setFrameworkId(activeFrameworks[0].id)
       }
     } catch (error) {
-      setError(handleClientError(error))
+      setErrors({ form: [handleClientError(error)] })
     }
+  }
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string[] } = {
+      question: validateInput(question, [required]),
+      frameworkId: validateInput(frameworkId, [required]),
+    }
+
+    setErrors(newErrors)
+    return Object.values(newErrors).every(fieldErrors => fieldErrors.length === 0)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validateForm()) return
     setIsLoading(true)
-    setError('')
 
     try {
       const response = await fetch('/api/decisions/start', {
@@ -54,7 +65,7 @@ export default function NewDecision() {
       const data = await response.json()
       router.push(`/decisions/${data.id}/steps/0`)
     } catch (error) {
-      setError(handleClientError(error))
+      setErrors({ form: [handleClientError(error)] })
     } finally {
       setIsLoading(false)
     }
@@ -63,7 +74,9 @@ export default function NewDecision() {
   return (
     <Card className="max-w-md mx-auto mt-10">
       <h1 className="text-2xl font-bold mb-5">Start a New Decision</h1>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {errors.form && errors.form.map((error, index) => (
+        <p key={index} className="text-red-500 mb-4">{error}</p>
+      ))}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="form-group">
           <label htmlFor="question" className="form-label">What decision do you need help with?</label>
@@ -74,6 +87,9 @@ export default function NewDecision() {
             required
             rows={4}
           />
+          {errors.question && errors.question.map((error, index) => (
+            <p key={index} className="text-red-500 text-xs italic">{error}</p>
+          ))}
         </div>
         <div className="form-group">
           <label htmlFor="framework" className="form-label">Select a Decision Framework</label>
@@ -90,6 +106,9 @@ export default function NewDecision() {
               })),
             ]}
           />
+          {errors.frameworkId && errors.frameworkId.map((error, index) => (
+            <p key={index} className="text-red-500 text-xs italic">{error}</p>
+          ))}
         </div>
         <Button
           type="submit"
