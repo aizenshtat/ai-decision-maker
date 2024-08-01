@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button, Input, Textarea, ErrorMessage } from './ui';
+import { validateInput, required, isNumber, isPositiveNumber } from '@/utils/validation';
 
 interface FeedbackFormProps {
   decisionId: string;
@@ -11,24 +12,29 @@ interface FeedbackFormProps {
 const FeedbackForm: React.FC<FeedbackFormProps> = ({ decisionId, onSubmit }) => {
   const [rating, setRating] = useState<number>(0);
   const [comment, setComment] = useState<string>('');
-  const [error, setError] = useState<string>('');
+  const [errors, setErrors] = useState<{ [key: string]: string[] }>({});
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: string[] } = {
+      rating: validateInput(rating.toString(), [required, isNumber, isPositiveNumber]),
+      comment: validateInput(comment, []),
+    }
+
+    setErrors(newErrors)
+    return Object.values(newErrors).every(fieldErrors => fieldErrors.length === 0)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    if (!validateForm()) return;
     
-    if (rating === 0) {
-      setError('Please select a rating');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       await onSubmit(rating, comment);
       // Success message will be handled by the parent component
     } catch (error) {
-      setError('Failed to submit feedback. Please try again.');
+      setErrors({ form: ['Failed to submit feedback. Please try again.'] });
     } finally {
       setIsSubmitting(false);
     }
@@ -52,6 +58,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ decisionId, onSubmit }) => 
             </button>
           ))}
         </div>
+        {errors.rating && errors.rating.map((error, index) => (
+          <ErrorMessage key={index}>{error}</ErrorMessage>
+        ))}
       </div>
       <Textarea
         id="feedback-comment"
@@ -60,7 +69,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ decisionId, onSubmit }) => 
         onChange={(e) => setComment(e.target.value)}
         placeholder="Share your thoughts about this decision process..."
       />
-      {error && <ErrorMessage>{error}</ErrorMessage>}
+      {errors.form && errors.form.map((error, index) => (
+        <ErrorMessage key={index}>{error}</ErrorMessage>
+      ))}
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
       </Button>

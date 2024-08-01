@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from '../../auth/[...nextauth]/route'
 import { AppError, handleApiError, createApiErrorResponse } from '@/utils/errorHandling'
+import { validateInput, required } from '@/utils/validation'
 
 export async function POST(request: Request) {
   try {
@@ -14,8 +15,12 @@ export async function POST(request: Request) {
     }
 
     const { question, frameworkId } = await request.json()
-    if (!question || !frameworkId) {
-      throw new AppError('Missing required fields', 400)
+    
+    const questionErrors = validateInput(question, [required])
+    const frameworkIdErrors = validateInput(frameworkId, [required])
+
+    if (questionErrors.length > 0 || frameworkIdErrors.length > 0) {
+      return createApiErrorResponse('Invalid input', 400)
     }
 
     const user = await prisma.user.findUnique({

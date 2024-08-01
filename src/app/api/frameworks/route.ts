@@ -7,6 +7,7 @@ import { authOptions } from '../auth/[...nextauth]/route'
 import { AppError, handleApiError } from '@/utils/errorHandling'
 import { Framework, Step } from '@/types/framework'
 import { parseSteps } from '@/utils/frameworkUtils'
+import { validateInput, required } from '@/utils/validation'
 
 export async function GET(request: Request) {
   try {
@@ -46,9 +47,19 @@ export async function POST(request: Request) {
 
     const { name, description, steps, cloneFrom } = await request.json()
 
+    const nameErrors = validateInput(name, [required])
+    if (nameErrors.length > 0) {
+      throw new AppError('Invalid framework name', 400)
+    }
+
     let frameworkData;
 
     if (cloneFrom) {
+      const cloneFromErrors = validateInput(cloneFrom, [required])
+      if (cloneFromErrors.length > 0) {
+        throw new AppError('Invalid clone source', 400)
+      }
+
       const sourceFramework = await prisma.framework.findUnique({
         where: { id: cloneFrom }
       })

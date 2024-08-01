@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from '../../../../../auth/[...nextauth]/route'
 import { getAiSuggestion, generateDecisionSummary } from '@/services/aiSuggestionService'
 import { AppError, handleApiError } from '@/utils/errorHandling'
+import { validateInput, required } from '@/utils/validation'
 
 export async function POST(
   request: Request,
@@ -22,6 +23,13 @@ export async function POST(
       throw new AppError('Missing required parameters', 400)
     }
 
+    const idErrors = validateInput(id, [required])
+    const stepErrors = validateInput(step, [required])
+
+    if (idErrors.length > 0 || stepErrors.length > 0) {
+      throw new AppError('Invalid input', 400)
+    }
+
     const stepIndex = parseInt(step)
     if (isNaN(stepIndex)) {
       throw new AppError('Invalid step parameter', 400)
@@ -29,6 +37,9 @@ export async function POST(
 
     const body = await request.json()
     const { stepData, aiSuggestion } = body
+
+    // Validate stepData and aiSuggestion here
+    // The exact validation will depend on the structure of your data
 
     const decision = await prisma.decision.findUnique({
       where: { id },
