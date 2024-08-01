@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
-import { authOptions } from '../../../../../auth/[...nextauth]/route'
+import { authOptions } from '../../../../../auth/[...nextauth]/options'
 import { getAiSuggestion, generateDecisionSummary } from '@/services/aiSuggestionService'
 import { AppError, handleApiError } from '@/utils/errorHandling'
 import { validateInput, required } from '@/utils/validation'

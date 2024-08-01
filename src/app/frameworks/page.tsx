@@ -7,6 +7,7 @@ import { handleClientError } from '@/utils/errorHandling'
 import { handleExpiredSession } from '@/utils/sessionUtils'
 import { Framework } from '@/types/framework'
 import FrameworkCard from '@/components/FrameworkCard'
+import { authenticatedFetch } from '@/utils/api'
 
 export default function Frameworks() {
   const [frameworks, setFrameworks] = useState<Framework[]>([])
@@ -20,11 +21,8 @@ export default function Frameworks() {
 
   const fetchFrameworks = async () => {
     try {
-      const response = await fetch('/api/frameworks?includeArchived=true')
-      if (response.status === 401) {
-        await handleExpiredSession();
-        return;
-      }
+      const response = await authenticatedFetch('/api/frameworks?includeArchived=true')
+      if (!response) return; // Session expired and user is redirected
       if (!response.ok) throw new Error('Failed to fetch frameworks')
       const data = await response.json()
       setFrameworks(data)

@@ -2,11 +2,14 @@
 
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { getServerSession } from "next-auth/next"
-import { authOptions } from '../auth/[...nextauth]/route'
+import { getServerSession } from "next-auth"
+import type { NextApiRequest, NextApiResponse } from 'next'
+import { authOptions } from '../auth/[...nextauth]/options'
 import { AppError, handleApiError } from '@/utils/errorHandling'
 import { parseSteps } from '@/utils/frameworkUtils'
 import { Decision } from '@/types/decision'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +35,7 @@ export async function GET(request: Request) {
       },
     })
 
-    const formattedDecisions = decisions.map(decision => ({
+    const formattedDecisions = decisions.map((decision: any) => ({
       ...decision,
       createdAt: decision.createdAt.toISOString(),
       status: decision.status as 'in_progress' | 'completed',

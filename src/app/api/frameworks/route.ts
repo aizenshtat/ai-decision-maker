@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from "next-auth/next"
-import { authOptions } from '../auth/[...nextauth]/route'
+import { authOptions } from '../auth/[...nextauth]/options'
 import { AppError, handleApiError } from '@/utils/errorHandling'
 import { Framework, Step } from '@/types/framework'
 import { parseSteps } from '@/utils/frameworkUtils'
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
       distinct: ['name']
     })
 
-    const frameworks: Framework[] = rawFrameworks.map(framework => ({
+    const frameworks: Framework[] = rawFrameworks.map((framework: any) => ({
       ...framework,
       steps: parseSteps(framework.steps)
     }))
@@ -46,11 +46,6 @@ export async function POST(request: Request) {
     }
 
     const { name, description, steps, cloneFrom } = await request.json()
-
-    const nameErrors = validateInput(name, [required])
-    if (nameErrors.length > 0) {
-      throw new AppError('Invalid framework name', 400)
-    }
 
     let frameworkData;
 
@@ -75,6 +70,11 @@ export async function POST(request: Request) {
         userId: session.user.id,
       }
     } else {
+      const nameErrors = validateInput(name, [required])
+      if (nameErrors.length > 0) {
+        throw new AppError('Invalid framework name', 400)
+      }
+
       frameworkData = {
         name,
         description,

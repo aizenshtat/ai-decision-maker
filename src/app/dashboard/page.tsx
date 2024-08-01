@@ -9,6 +9,9 @@ import { Decision } from '@/types/decision'
 import { handleClientError } from '@/utils/errorHandling'
 import FeedbackForm from '@/components/FeedbackForm'
 import { handleExpiredSession } from '@/utils/sessionUtils'
+import Modal from '@/components/Modal'
+import Button from '@/components/ui/Button'
+import { authenticatedFetch } from '@/utils/api'
 
 export default function Dashboard() {
   const [decisions, setDecisions] = useState<Decision[]>([])
@@ -16,6 +19,8 @@ export default function Dashboard() {
   const [error, setError] = useState('')
   const router = useRouter()
   const [showFeedbackForm, setShowFeedbackForm] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [decisionToDelete, setDecisionToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     fetchDecisions()
@@ -23,11 +28,8 @@ export default function Dashboard() {
 
   const fetchDecisions = async () => {
     try {
-      const response = await fetch('/api/decisions')
-      if (response.status === 401) {
-        await handleExpiredSession();
-        return;
-      }
+      const response = await authenticatedFetch('/api/decisions')
+      if (!response) return; // Session expired and user is redirected
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -41,28 +43,36 @@ export default function Dashboard() {
   }
 
   const handleDeleteDecision = async (id: string) => {
-    if (confirm('Are you sure you want to delete this decision? This action cannot be undone and will also delete all related feedback.')) {
+    setDecisionToDelete(id)
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (decisionToDelete) {
       try {
-        const response = await fetch(`/api/decisions/${id}`, { method: 'DELETE' })
+        const response = await authenticatedFetch(`/api/decisions/${decisionToDelete}`, { method: 'DELETE' })
+        if (!response) return; // Session expired and user is redirected
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
-        setDecisions(decisions.filter(decision => decision.id !== id))
+        setDecisions(decisions.filter(decision => decision.id !== decisionToDelete))
       } catch (error) {
         setError(handleClientError(error))
       }
     }
+    setIsDeleteModalOpen(false)
+    setDecisionToDelete(null)
   }
 
   const handleFeedbackSubmit = async (decisionId: string, rating: number, comment: string) => {
     try {
-      const response = await fetch(`/api/decisions/${decisionId}/feedback`, {
+      const response = await authenticatedFetch(`/api/decisions/${decisionId}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating, comment }),
-      });
-
+      })
+      if (!response) return; // Session expired and user is redirected
       if (!response.ok) throw new Error('Failed to submit feedback');
       setShowFeedbackForm(null);
       fetchDecisions(); // Refresh the decisions list to show updated feedback
@@ -135,6 +145,19 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirm Delete"
+        actions={
+          <>
+            <Button onClick={() => setIsDeleteModalOpen(false)} className="bg-gray-200 text-gray-800">Cancel</Button>
+            <Button onClick={confirmDelete} className="bg-red-500 text-white">Delete</Button>
+          </>
+        }
+      >
+        <p>Are you sure you want to delete this decision? This action cannot be undone.</p>
+      </Modal>
     </div>
   )
 }

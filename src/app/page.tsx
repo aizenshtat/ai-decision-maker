@@ -1,11 +1,14 @@
-// src/app/page.tsx
+'use client'
 
-import { getServerSession } from "next-auth/next"
-import { authOptions } from './api/auth/[...nextauth]/route'
+import { useSession } from "next-auth/react"
 import Link from 'next/link'
 
-export default async function Home() {
-  const session = await getServerSession(authOptions)
+export default function Home() {
+  const { data: session, status } = useSession()
+
+  if (status === "loading") {
+    return <div>Loading...</div>
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">

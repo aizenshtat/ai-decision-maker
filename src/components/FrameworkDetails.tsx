@@ -2,11 +2,11 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Framework, Step, Field, ObjectStructure, MatrixStructure, CellFormat, Validation, Dependency } from '@/types/framework'
 import { Card, Button, Input, Label, Textarea, IconButton, Select } from './ui'
 import { ChevronDown, ChevronUp, Plus, Trash } from 'lucide-react'
-import { handleExpiredSession } from '@/utils/sessionUtils'
+import { authenticatedFetch } from '@/utils/api'
 
 interface FrameworkDetailsProps {
   id: string
@@ -20,17 +20,10 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
   const [expandedSteps, setExpandedSteps] = useState<number[]>([])
   const [isArchived, setIsArchived] = useState(false)
 
-  useEffect(() => {
-    fetchFramework()
-  }, [id])
-
-  const fetchFramework = async () => {
+  const fetchFramework = useCallback(async () => {
     try {
-      const response = await fetch(`/api/frameworks/${id}`)
-      if (response.status === 401) {
-        await handleExpiredSession();
-        return;
-      }
+      const response = await authenticatedFetch(`/api/frameworks/${id}`)
+      if (!response) return; // Session expired and user is redirected
       if (!response.ok) throw new Error('Failed to fetch framework')
       const data = await response.json()
       setFramework(data)
@@ -41,7 +34,11 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [id])
+
+  useEffect(() => {
+    fetchFramework()
+  }, [fetchFramework])
 
   const handleEdit = () => {
     setIsEditing(true)
@@ -49,11 +46,12 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
 
   const handleSave = async () => {
     try {
-      const response = await fetch(`/api/frameworks/${id}`, {
+      const response = await authenticatedFetch(`/api/frameworks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...framework, archived: isArchived }),
       })
+      if (!response) return; // Session expired and user is redirected
       if (!response.ok) throw new Error('Failed to update framework')
       setIsEditing(false)
       // Refresh the framework data
