@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata = {
   title: 'AI Decision Maker',
   description: 'Make better decisions with AI assistance',
+  icons: [
+    { rel: 'icon', type: 'image/svg+xml', url: '/logo.svg' },
+  ],
 }
 
 export default function RootLayout({

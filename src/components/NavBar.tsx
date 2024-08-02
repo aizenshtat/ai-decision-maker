@@ -1,44 +1,107 @@
 'use client'
 
-import { useSession } from "next-auth/react"
-import Link from 'next/link'
-import LogoutButton from './LogoutButton'
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { usePathname } from 'next/navigation';
+import { Menu, X, Sun, Moon, Home, FileText, Layers, Settings } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import Button from '../components/ui/Button';
 
-export default function NavBar() {
-  const { data: session, status } = useSession()
+const NavBar = () => {
+  const { data: session } = useSession();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
 
-  if (status === "loading") {
-    return <div>Loading...</div>
-  }
+  const navItems = [
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Decisions', href: '/decisions', icon: FileText },
+    { name: 'Frameworks', href: '/frameworks', icon: Layers },
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ];
 
   return (
-    <nav className={`bg-white dark:bg-gray-800 shadow-md ${theme === 'light' ? 'bg-white' : 'bg-gray-800'}`}>
-      <div className="responsive-container flex justify-between items-center py-4">
-        <h1 className="text-2xl font-bold text-primary-600 dark:text-primary-400">AI Decision Maker</h1>
-        <div className="space-x-4">
-          {session ? (
-            <>
-              <Link href="/dashboard" className="text-gray-600 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400">Dashboard</Link>
-              <Link href="/decisions/new" className="text-gray-600 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400">New Decision</Link>
-              <Link href="/frameworks" className="text-gray-600 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400">Frameworks</Link>
-              <LogoutButton />
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="text-gray-600 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400">Login</Link>
-              <Link href="/register" className="text-gray-600 dark:text-gray-300 hover:text-primary-500 dark:hover:text-primary-400">Register</Link>
-            </>
-          )}
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+        <div className="flex-1 flex flex-col min-h-0 bg-gray-800 dark:bg-gray-900">
+          <div className="flex items-center h-16 flex-shrink-0 px-4 bg-gray-900 dark:bg-gray-800">
+            <img className="h-8 w-auto" src="/logo.svg" alt="Logo" />
+          </div>
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            <nav className="flex-1 px-2 py-4 space-y-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`${
+                    pathname === item.href
+                      ? 'bg-gray-900 dark:bg-gray-800 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
+                >
+                  <item.icon className="mr-3 flex-shrink-0 h-6 w-6" aria-hidden="true" />
+                  {item.name}
+                </Link>
+              ))}
+            </nav>
+          </div>
         </div>
-        <button
-          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-          className="p-2 rounded-md bg-gray-200 dark:bg-gray-700"
-        >
-          {theme === 'light' ? '🌙' : '☀️'}
-        </button>
       </div>
-    </nav>
-  )
-}
+
+      {/* Mobile menu */}
+      <div className="md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-50">
+          <nav className="flex justify-around">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`${
+                  pathname === item.href
+                    ? 'text-primary-500'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-primary-500'
+                } flex flex-col items-center py-2`}
+              >
+                <item.icon className="h-6 w-6" aria-hidden="true" />
+                <span className="text-xs mt-1">{item.name}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Top bar */}
+      <div className="md:pl-64 flex flex-col flex-1">
+        <div className="sticky top-0 z-10 flex-shrink-0 flex h-16 bg-white dark:bg-gray-800 shadow">
+          <button
+            type="button"
+            className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 md:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            <span className="sr-only">Open sidebar</span>
+            <Menu className="h-6 w-6" aria-hidden="true" />
+          </button>
+          <div className="flex-1 px-4 flex justify-between">
+            <div className="flex-1 flex">
+              {/* Add search functionality here if needed */}
+            </div>
+            <div className="ml-4 flex items-center md:ml-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+              {/* Add user menu here */}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default NavBar;

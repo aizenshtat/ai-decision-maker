@@ -1,15 +1,19 @@
 // src/components/ui/Card.tsx
-import React, { ReactNode } from 'react';
+import React from 'react';
 
-interface CardProps {
-  children: ReactNode;
-  className?: string;
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
 }
 
-const Card: React.FC<CardProps> = ({ children, className = '' }) => (
-  <div className={`bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 ${className}`}>
-    {children}
-  </div>
-);
+const Card: React.FC<CardProps> = ({ children, className, ...props }) => {
+  return (
+    <div
+      className={`bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 ${className}`}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
 
 export default Card;

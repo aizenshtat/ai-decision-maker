@@ -4,7 +4,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Framework, Step, Field, ObjectStructure, MatrixStructure, CellFormat, Validation, Dependency } from '@/types/framework'
-import { Card, Button, Input, Label, Textarea, IconButton, Select } from './ui'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
+import Textarea from '@/components/ui/Textarea'
+import Select from '@/components/ui/Select'
 import { ChevronDown, ChevronUp, Plus, Trash } from 'lucide-react'
 import { authenticatedFetch } from '@/utils/api'
 
@@ -302,9 +306,13 @@ const FieldDetails: React.FC<{ field: Field; isEditing: boolean; onChange: (upda
                 id={`field-${field.name}-object-structure-${key}-type`}
                 label="Field Type"
                 value={value}
-                onChange={(e) => updateField('object_structure', { ...structure, [key]: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateField('object_structure', { ...structure, [key]: e.target.value })}
                 disabled={!isEditing}
-                options={['text', 'textarea', 'number']}
+                options={[
+                  { value: 'text', label: 'Text' },
+                  { value: 'textarea', label: 'Textarea' },
+                  { value: 'number', label: 'Number' }
+                ]}
               />
             ) : (
               <div className="space-y-2">
@@ -550,9 +558,13 @@ const FieldDetails: React.FC<{ field: Field; isEditing: boolean; onChange: (upda
         id={`field-${field.name}-cell-format-type`}
         label="Cell Type"
         value={format.type}
-        onChange={(e) => updateField('cell_format', { ...format, type: e.target.value })}
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateField('cell_format', { ...format, type: e.target.value })}
         disabled={!isEditing}
-        options={['number', 'text', 'select']}
+        options={[
+          { value: 'number', label: 'Number' },
+          { value: 'text', label: 'Text' },
+          { value: 'select', label: 'Select' }
+        ]}
       />
       {format.type === 'number' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -608,9 +620,16 @@ const FieldDetails: React.FC<{ field: Field; isEditing: boolean; onChange: (upda
           id={`field-${field.name}-type`}
           label="Type"
           value={field.type}
-          onChange={(e) => updateField('type', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateField('type', e.target.value)}
           disabled={!isEditing}
-          options={['text', 'textarea', 'number', 'select', 'list_of_objects', 'matrix']}
+          options={[
+            { value: 'text', label: 'Text' },
+            { value: 'textarea', label: 'Textarea' },
+            { value: 'number', label: 'Number' },
+            { value: 'select', label: 'Select' },
+            { value: 'list_of_objects', label: 'List of Objects' },
+            { value: 'matrix', label: 'Matrix' }
+          ]}
         />
         <Input
           id={`field-${field.name}-placeholder`}

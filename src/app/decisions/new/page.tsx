@@ -2,19 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Layout from '@/components/Layout'
-import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
-import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
+import DecisionWizard from '@/components/DecisionWizard'
 import { Framework } from '@/types/framework'
-import { handleClientError } from '@/utils/errorHandling'
+import { authenticatedFetch } from '@/utils/api'
 
 export default function NewDecision() {
-  const [question, setQuestion] = useState('')
-  const [frameworkId, setFrameworkId] = useState('')
   const [frameworks, setFrameworks] = useState<Framework[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const router = useRouter()
 
@@ -24,23 +18,19 @@ export default function NewDecision() {
 
   const fetchFrameworks = async () => {
     try {
-      const response = await fetch('/api/frameworks')
-      if (!response.ok) throw new Error('Failed to fetch frameworks')
-      const data = await response.json()
-      setFrameworks(data)
-      if (data.length > 0) {
-        setFrameworkId(data[0].id)
+      const response = await authenticatedFetch('/api/frameworks')
+      if (response) {
+        const data = await response.json()
+        setFrameworks(data)
       }
     } catch (error) {
-      setError(handleClientError(error))
+      setError('Failed to fetch frameworks')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
-
+  const handleSubmit = async (question: string, frameworkId: string) => {
     try {
       const response = await fetch('/api/decisions/start', {
         method: 'POST',
@@ -57,47 +47,17 @@ export default function NewDecision() {
       const data = await response.json()
       router.push(`/decisions/${data.id}/steps/0`)
     } catch (error) {
-      setError(handleClientError(error))
-    } finally {
-      setIsLoading(false)
+      setError('Failed to start decision. Please try again.')
     }
   }
 
+  if (isLoading) return <div>Loading frameworks...</div>
+  if (error) return <div className="text-red-500">{error}</div>
+
   return (
-    <Layout>
-      <div className="max-w-md mx-auto mt-10">
-        <Card>
-          <h1 className="text-2xl font-bold mb-5">Start a New Decision</h1>
-          {error && <p className="text-red-500 mb-4">{error}</p>}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              id="question"
-              label="What decision do you need help with?"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              required
-            />
-            <Select
-              id="framework"
-              label="Select a Decision Framework"
-              value={frameworkId}
-              onChange={(e) => setFrameworkId(e.target.value)}
-              required
-              options={frameworks.map((framework) => ({
-                value: framework.id,
-                label: framework.name,
-              }))}
-            />
-            <Button
-              type="submit"
-              disabled={isLoading || !frameworkId}
-              className="w-full"
-            >
-              {isLoading ? 'Processing...' : 'Start Decision Process'}
-            </Button>
-          </form>
-        </Card>
-      </div>
-    </Layout>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">Start a New Decision</h1>
+      <DecisionWizard frameworks={frameworks} onSubmit={handleSubmit} />
+    </div>
   )
 }

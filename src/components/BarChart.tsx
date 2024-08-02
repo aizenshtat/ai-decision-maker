@@ -9,16 +9,17 @@ interface BarChartProps {
   labels: string[];
   data: number[];
   title: string;
+  color?: string;
 }
 
-const BarChart: React.FC<BarChartProps> = ({ labels, data, title }) => {
+const BarChart: React.FC<BarChartProps> = ({ labels, data, title, color = 'rgba(75, 192, 192, 0.6)' }) => {
   const chartData = {
     labels,
     datasets: [
       {
         label: title,
         data,
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+        backgroundColor: color,
       },
     ],
   };
