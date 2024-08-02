@@ -8,6 +8,8 @@ import { handleExpiredSession } from '@/utils/sessionUtils'
 import { Framework } from '@/types/framework'
 import FrameworkCard from '@/components/FrameworkCard'
 import { authenticatedFetch } from '@/utils/api'
+import Layout from '@/components/Layout'
+import Button from '@/components/ui/Button'
 
 export default function Frameworks() {
   const [frameworks, setFrameworks] = useState<Framework[]>([])
@@ -101,36 +103,41 @@ export default function Frameworks() {
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Frameworks</h1>
-      <div className="grid gap-6">
-        <h2 className="text-2xl font-semibold">Active Frameworks</h2>
-        {frameworks.filter(framework => !framework.archived).map((framework) => (
-          <FrameworkCard
-            key={framework.id}
-            framework={framework}
-            onDelete={handleDeleteFramework}
-            onClone={handleCloneFramework}
-            onArchive={archiveFramework}
-            isArchived={false}
-          />
-        ))}
-      </div>
-      {frameworks.some(framework => framework.archived) && (
-        <div className="grid gap-6 mt-6">
-          <h2 className="text-2xl font-semibold">Archived Frameworks</h2>
-          {frameworks.filter(framework => framework.archived).map((framework) => (
+    <Layout>
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Frameworks</h1>
+        <Link href="/frameworks/new">
+          <Button className="mb-6">Add New Framework</Button>
+        </Link>
+        <div className="grid gap-6">
+          <h2 className="text-2xl font-semibold">Active Frameworks</h2>
+          {frameworks.filter(framework => !framework.archived).map((framework) => (
             <FrameworkCard
               key={framework.id}
               framework={framework}
               onDelete={handleDeleteFramework}
               onClone={handleCloneFramework}
               onArchive={archiveFramework}
-              isArchived={true}
+              isArchived={false}
             />
           ))}
         </div>
-      )}
-    </div>
+        {frameworks.some(framework => framework.archived) && (
+          <div className="grid gap-6 mt-6">
+            <h2 className="text-2xl font-semibold">Archived Frameworks</h2>
+            {frameworks.filter(framework => framework.archived).map((framework) => (
+              <FrameworkCard
+                key={framework.id}
+                framework={framework}
+                onDelete={handleDeleteFramework}
+                onClone={handleCloneFramework}
+                onArchive={archiveFramework}
+                isArchived={true}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </Layout>
   )
 }

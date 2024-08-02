@@ -1,36 +1,101 @@
 'use client'
 
-import { useSession } from "next-auth/react"
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Card from '@/components/ui/Card'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
+import { Framework } from '@/types/framework'
+import { handleClientError } from '@/utils/errorHandling'
 
-export default function Home() {
-  const { data: session, status } = useSession()
+export default function NewDecision() {
+  const [question, setQuestion] = useState('')
+  const [frameworkId, setFrameworkId] = useState('')
+  const [frameworks, setFrameworks] = useState<Framework[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
-  if (status === "loading") {
-    return <div>Loading...</div>
+  const handleQuestionChange = (e: React.ChangeEvent<HTMLInputElement>) => setQuestion(e.target.value);
+  const handleFrameworkChange = (e: React.ChangeEvent<HTMLSelectElement>) => setFrameworkId(e.target.value);
+
+  useEffect(() => {
+    fetchFrameworks()
+  }, [])
+
+  const fetchFrameworks = async () => {
+    try {
+      const response = await fetch('/api/frameworks')
+      if (!response.ok) throw new Error('Failed to fetch frameworks')
+      const data = await response.json()
+      setFrameworks(data)
+      if (data.length > 0) {
+        setFrameworkId(data[0].id)
+      }
+    } catch (error) {
+      setError(handleClientError(error))
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/decisions/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ question, frameworkId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to start decision')
+      }
+
+      const data = await response.json()
+      router.push(`/decisions/${data.id}/steps/0`)
+    } catch (error) {
+      setError(handleClientError(error))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold mb-8">AI Decision Maker</h1>
-      {session ? (
-        <div>
-          <p className="mb-4">Welcome, {session.user?.name || 'User'}!</p>
-          <Link href="/decisions/new" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Start a New Decision
-          </Link>
-        </div>
-      ) : (
-        <div>
-          <p className="mb-4">Please log in or register to use the AI Decision Maker.</p>
-          <Link href="/login" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-4">
-            Login
-          </Link>
-          <Link href="/register" className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-            Register
-          </Link>
-        </div>
-      )}
-    </div>
+    <Card className="max-w-md mx-auto mt-10">
+      <h1 className="text-2xl font-bold mb-5">Start a New Decision</h1>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          id="question"
+          label="What decision do you need help with?"
+          value={question}
+          onChange={handleQuestionChange}
+          required
+        />
+        <Select
+          id="framework"
+          label="Select a Decision Framework"
+          value={frameworkId}
+          onChange={handleFrameworkChange}
+          required
+          options={frameworks.map((framework) => ({
+            value: framework.id,
+            label: framework.name,
+          }))}
+        />
+        <Button
+          type="submit"
+          disabled={isLoading || !frameworkId}
+          className="w-full"
+        >
+          {isLoading ? 'Processing...' : 'Start Decision Process'}
+        </Button>
+      </form>
+    </Card>
   )
 }

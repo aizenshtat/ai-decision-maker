@@ -1,8 +1,26 @@
-@import '../styles/common.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md transition duration-150 ease-in-out;
+  }
+  .btn-primary {
+    @apply btn bg-blue-500 text-white hover:bg-blue-600;
+  }
+  .btn-secondary {
+    @apply btn bg-gray-500 text-white hover:bg-gray-600;
+  }
+}
+
+@import '../styles/common.css';
 
 :root {
   --foreground-rgb: 0, 0, 0;
