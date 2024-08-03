@@ -1,7 +1,7 @@
 // src/components/SelectField.tsx
 
 import React from 'react'
-import { Select } from './ui'
+import Select from './ui/Select'
 
 interface SelectFieldProps {
   field: {

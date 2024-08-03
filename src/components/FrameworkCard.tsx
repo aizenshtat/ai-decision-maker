@@ -2,7 +2,7 @@ import { Framework } from '@/types/framework'
 import Link from 'next/link'
 import { useState } from 'react'
 import Modal from './Modal'
-import { Button } from './ui'
+import Button from '@/components/ui/Button';
 
 interface FrameworkCardProps {
   framework: Framework;
@@ -40,28 +40,19 @@ const FrameworkCard: React.FC<FrameworkCardProps> = ({ framework, onDelete, onCl
     <div className="bg-white shadow-md rounded-lg p-6">
       <h2 className="text-xl font-semibold mb-2">{framework.name}</h2>
       <p className="text-gray-600 mb-4">{framework.description}</p>
-      <div className="flex space-x-4">
-        <Link href={`/frameworks/${framework.id}`} className="text-blue-500 hover:text-blue-700">
-          View Details
-        </Link>
-        {!isArchived && framework.id !== 'default' && (
-          <>
-            {onEdit && (
-              <button onClick={() => onEdit(framework.id)} className="text-green-500 hover:text-green-700">
-                Edit
-              </button>
-            )}
-            <button onClick={handleDeleteClick} className="text-red-500 hover:text-red-700">
-              Delete
-            </button>
-            <button onClick={handleArchiveClick} className="text-yellow-500 hover:text-yellow-700">
-              Archive
-            </button>
-          </>
-        )}
-        <button onClick={() => onClone(framework.id)} className="text-purple-500 hover:text-purple-700">
+      <div className="flex space-x-2">
+        <Button variant="outline" size="sm" onClick={() => onEdit && onEdit(framework.id)}>
+          Edit
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleDeleteClick} className="text-red-500">
+          Delete
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleArchiveClick} className="text-yellow-500">
+          Archive
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => onClone(framework.id)} className="text-purple-500">
           Clone
-        </button>
+        </Button>
       </div>
       <Modal
         isOpen={isModalOpen}

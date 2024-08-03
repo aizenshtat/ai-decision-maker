@@ -4,11 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { handleClientError } from '@/utils/errorHandling'
-import { handleExpiredSession } from '@/utils/sessionUtils'
 import { Framework } from '@/types/framework'
 import FrameworkCard from '@/components/FrameworkCard'
 import { authenticatedFetch } from '@/utils/api'
-import Layout from '@/components/Layout'
 import Button from '@/components/ui/Button'
 
 export default function Frameworks() {
@@ -103,7 +101,7 @@ export default function Frameworks() {
   if (error) return <div className="text-center mt-10 text-red-500">{error}</div>
 
   return (
-    <Layout>
+    <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Frameworks</h1>
         <Link href="/frameworks/new">
@@ -138,6 +136,6 @@ export default function Frameworks() {
           </div>
         )}
       </div>
-    </Layout>
+    </div>
   )
 }

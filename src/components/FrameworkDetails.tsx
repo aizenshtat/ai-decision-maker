@@ -165,16 +165,22 @@ export default function FrameworkDetails({ id }: FrameworkDetailsProps) {
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Step {stepIndex + 1}: {step.title}</h3>
                 <div>
-                  <IconButton
+                  <Button
                     onClick={() => toggleStepExpansion(stepIndex)}
-                    icon={expandedSteps.includes(stepIndex) ? ChevronUp : ChevronDown}
-                  />
+                    variant="ghost"
+                    size="sm"
+                  >
+                    {expandedSteps.includes(stepIndex) ? <ChevronUp /> : <ChevronDown />}
+                  </Button>
                   {isEditing && (
-                    <IconButton
+                    <Button
                       onClick={() => removeStep(stepIndex)}
-                      icon={Trash}
+                      variant="ghost"
+                      size="sm"
                       className="ml-2 text-red-500"
-                    />
+                    >
+                      <Trash />
+                    </Button>
                   )}
                 </div>
               </div>

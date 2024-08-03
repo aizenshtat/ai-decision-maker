@@ -1,7 +1,11 @@
 // src/components/ListOfObjectsField.tsx
 
 import React, { useState, useEffect } from 'react'
-import { Card, Button, Input, Select, ErrorMessage } from './ui'
+import Card from './ui/Card'
+import Button from './ui/Button'
+import Input from './ui/Input'
+import Select from './ui/Select'
+import { ErrorMessage } from './ui/ErrorMessage'
 import { Field, ObjectStructure } from '@/types/framework'
 
 interface ListOfObjectsFieldProps {

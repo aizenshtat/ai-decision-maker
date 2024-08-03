@@ -1,15 +1,20 @@
 'use client'
 
 import React from 'react';
-import Layout from '@/components/Layout';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
 
-const SettingsPage: React.FC = () => {
+export default function SettingsPage() {
+  // Add your settings state and handlers here
+
   return (
-    <Layout>
+    <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      {/* Add content for the Settings page */}
-    </Layout>
+      <Card>
+        <h2 className="text-xl font-semibold mb-4">User Preferences</h2>
+        {/* Add your settings form or options here */}
+        <Button className="mt-4">Save Settings</Button>
+      </Card>
+    </div>
   );
-};
-
-export default SettingsPage;
+}

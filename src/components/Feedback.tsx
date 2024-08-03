@@ -1,6 +1,8 @@
 // src/components/Feedback.tsx
 import React, { useState } from 'react';
-import { Card, Button, Textarea } from '@/components/ui';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Textarea from '@/components/ui/Textarea';
 
 const Feedback: React.FC = () => {
   const [feedback, setFeedback] = useState('');

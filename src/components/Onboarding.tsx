@@ -1,6 +1,11 @@
 // src/components/Onboarding.tsx
 import React, { useState } from 'react';
-import { Card, Button } from '@/components/ui';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+
+interface OnboardingProps {
+  onComplete: () => void;
+}
 
 const onboardingSteps = [
   {
@@ -25,12 +30,14 @@ const onboardingSteps = [
   },
 ];
 
-const Onboarding: React.FC = () => {
+const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
 
   const handleNext = () => {
     if (currentStep < onboardingSteps.length - 1) {
       setCurrentStep(currentStep + 1);
+    } else {
+      onComplete();
     }
   };
 
@@ -48,7 +55,7 @@ const Onboarding: React.FC = () => {
         <Button onClick={handlePrevious} disabled={currentStep === 0}>
           Previous
         </Button>
-        <Button onClick={handleNext} disabled={currentStep === onboardingSteps.length - 1}>
+        <Button onClick={handleNext}>
           {currentStep === onboardingSteps.length - 1 ? 'Finish' : 'Next'}
         </Button>
       </div>

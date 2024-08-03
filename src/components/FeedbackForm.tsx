@@ -1,7 +1,10 @@
 // src/components/FeedbackForm.tsx
 
 import React, { useState } from 'react';
-import { Button, Input, Textarea, ErrorMessage } from './ui';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Textarea from './ui/Textarea';
+import { ErrorMessage } from './ui/ErrorMessage';
 import { validateInput, required, isNumber, isPositiveNumber } from '@/utils/validation';
 
 interface FeedbackFormProps {

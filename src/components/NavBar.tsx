@@ -6,9 +6,9 @@ import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Sun, Moon, Home, FileText, Layers, Settings } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-import Button from '../components/ui/Button';
+import Button from './ui/Button';
 
-const NavBar = () => {
+const NavBar: React.FC = () => {
   const { data: session } = useSession();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -25,8 +25,8 @@ const NavBar = () => {
     <>
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-        <div className="flex-1 flex flex-col min-h-0 bg-gray-800 dark:bg-gray-900">
-          <div className="flex items-center h-16 flex-shrink-0 px-4 bg-gray-900 dark:bg-gray-800">
+        <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-gray-800">
+          <div className="flex items-center h-16 flex-shrink-0 px-4 bg-white dark:bg-gray-800">
             <img className="h-8 w-auto" src="/logo.svg" alt="Logo" />
           </div>
           <div className="flex-1 flex flex-col overflow-y-auto">

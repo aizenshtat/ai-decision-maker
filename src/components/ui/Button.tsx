@@ -27,19 +27,11 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  children: React.ReactNode;
-}
+    VariantProps<typeof buttonVariants> {}
 
-const Button: React.FC<ButtonProps> = ({ className, variant, size, children, ...props }) => {
+const Button: React.FC<ButtonProps> = ({ className, variant, size, ...props }) => {
   return (
-    <button
-      className={buttonVariants({ variant, size, className })}
-      {...props}
-      aria-label={typeof children === 'string' ? children : undefined}
-    >
-      {children}
-    </button>
+    <button className={buttonVariants({ variant, size, className })} {...props} />
   );
 };
 

@@ -8,21 +8,6 @@
   }
 }
 
-@layer components {
-  .btn {
-    @apply px-4 py-2 rounded-md transition duration-150 ease-in-out;
-  }
-  .btn-primary {
-    @apply btn bg-blue-500 text-white hover:bg-blue-600;
-  }
-  .btn-secondary {
-    @apply btn bg-gray-500 text-white hover:bg-gray-600;
-  }
-}
-
-@import '../styles/common.css';
-@import '../styles/animations.css';
-
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;

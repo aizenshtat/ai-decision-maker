@@ -1,7 +1,9 @@
 // src/components/ListField.tsx
 
 import React from 'react'
-import { Button, Input, Label } from './ui'
+import Button from './ui/Button'
+import Input from './ui/Input'
+import { Label } from './ui/Label'
 
 interface ListFieldProps {
   field: {

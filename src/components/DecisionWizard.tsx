@@ -1,6 +1,7 @@
 // src/components/DecisionWizard.tsx
 import React, { useState, useEffect } from 'react';
-import { Button, Card } from '@/components/ui';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 import { Framework } from '@/types/framework';
 import Onboarding from '@/components/Onboarding';
 
@@ -26,7 +27,7 @@ const DecisionWizard: React.FC<DecisionWizardProps> = ({ frameworks, onSubmit })
           <input
             type="text"
             id="question"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
           />

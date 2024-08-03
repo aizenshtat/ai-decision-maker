@@ -1,7 +1,8 @@
 // src/components/MatrixField.tsx
 
 import React from 'react'
-import { Input, Label } from './ui'
+import Input from './ui/Input'
+import { Label } from './ui/Label'
 
 interface MatrixFieldProps {
   field: {

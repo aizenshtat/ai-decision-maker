@@ -1,7 +1,8 @@
 // src/components/TextField.tsx
 
 import React from 'react'
-import { Input, Textarea } from './ui'
+import Input from './ui/Input'
+import Textarea from './ui/Textarea'
 
 interface TextFieldProps {
   field: {
