@@ -99,7 +99,7 @@ const ListOfObjectsField: React.FC<ListOfObjectsFieldProps> = ({ field, value, o
             label={key}
             value={item[key].toString()}
             onChange={(e) => handleItemChange(index, key, e.target.value)}
-            options={options}
+            options={options.map(option => ({ value: option, label: option }))}
           />
         );
       }

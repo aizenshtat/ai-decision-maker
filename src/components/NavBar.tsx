@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, X, Sun, Moon, Home, FileText, Layers, Settings } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import Button from './ui/Button';
+import Image from 'next/image';
 
 const NavBar: React.FC = () => {
   const { data: session } = useSession();
@@ -27,7 +28,7 @@ const NavBar: React.FC = () => {
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
         <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-gray-800">
           <div className="flex items-center h-16 flex-shrink-0 px-4 bg-white dark:bg-gray-800">
-            <img className="h-8 w-auto" src="/logo.svg" alt="Logo" />
+            <Image src="/logo.svg" alt="Logo" width={32} height={32} />
           </div>
           <div className="flex-1 flex flex-col overflow-y-auto">
             <nav className="flex-1 px-2 py-4 space-y-1">
